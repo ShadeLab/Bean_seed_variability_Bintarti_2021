@@ -732,6 +732,165 @@ ggsave("pd.pod.tiff",
 ### RESULT: There are no significant differences of bacterial and archaeal richness among pods after post hoc Dunn test
 
 ###########################################################################################################################
+### Compare bacterial and archaeal richness among different pods of the same plants using one-way ANOVA######
+
+plantA <- bean.map[c(1:12),]
+plantA$plant <- factor(plantA$plant)
+plantA$pod <- factor(plantA$pod)
+plantA$sample.id <- factor(plantA$sample.id)
+plantB <- bean.map[c(13:36),]
+plantB$plant <- factor(plantB$plant)
+plantB$pod <- factor(plantB$pod)
+plantB$sample.id <- factor(plantB$sample.id)
+plantC <- bean.map[c(37:47),]
+plantC$plant <- factor(plantC$plant)
+plantC$pod <- factor(plantC$pod)
+plantC$sample.id <- factor(plantC$sample.id)
+
+#. 1. Plant A
+rich.podA <- aov(plantA$Richness ~ pod, data = plantA)
+summary(rich.podA) #3.156 0.0915
+# testing assumptions
+# Generate residual and predicted values
+rich.podA.resids <- residuals(rich.podA)
+rich.podA.preds <- predict(rich.podA)
+# Look at a plot of residual vs. predicted values
+plot(rich.podA.resids ~ rich.podA.preds, xlab = "Predicted Values", ylab = "Residuals", asp=.5)
+# plot a line on X-axis for comparison. a=intercept,b=slope,h=yvalue,v=xvalue.
+abline(a=0,h=0,b=0)
+# Perform a Shapiro-Wilk test for normality of residuals
+shapiro.test(rich.podA.resids) # p-value = 0.33, data errors are not normally distributed 
+# Perform Levene's Test for homogenity of variances
+leveneTest(Richness ~ pod, data=plantA, na.action=na.exclude) # p-val=0.26 variances among group are homogenous
+plot(density(rich.podA.resids)) 
+qqnorm(rich.podA.resids)
+qqline(rich.podA.resids)
+hist(rich.podA.resids)
+skew_xts <- skewness(rich.podA.resids)
+kurtosis(rich.podA.resids,method = 'sample')
+boxplot(Richness ~ pod,
+        ylab="Richness", xlab="pod", data = plantA) 
+#### RESULT: There are no differences of bacterial and archaeal richness among pods
+(rich.podA.plot <- ggplot(plantA, aes(x=pod, y=Richness))+
+                    geom_boxplot() +
+                    geom_jitter(height = 0, width = 0.1, alpha = 0.5)+
+                    theme_bw()+
+                    expand_limits(x = 0, y = 0)+
+                    labs(title = "A. Plant A")+
+                    # geom_text(data=new.richness.summarized,aes(x=Site,y=32+max.Richness,label=new.richness.summarized$groups),vjust=0)+
+                    theme(axis.text.x=element_text(size = 14),
+                          axis.text.y = element_text(size = 14),
+                          strip.text.y = element_text(size=18, face = 'bold'),
+                          plot.title = element_text(size = rel(2)),
+                          axis.title=element_text(size=18,face="bold"),
+                          plot.background = element_blank(),
+                          panel.grid.major = element_blank(),
+                          panel.grid.minor = element_blank()))
+ggsave("rich.podA.norm.tiff",
+       rich.podA.plot, device = "tiff",
+       width = 5, height =4, 
+       units= "in", dpi = 600)
+
+#. 2. Plant B
+rich.podB <- aov(plantB$Richness ~ pod, data = plantB)
+summary(rich.podB) #3.202 0.0306 *
+# testing assumptions
+# Generate residual and predicted values
+rich.podB.resids <- residuals(rich.podB)
+rich.podB.preds <- predict(rich.podB)
+# Look at a plot of residual vs. predicted values
+plot(rich.podB.resids ~ rich.podB.preds, xlab = "Predicted Values", ylab = "Residuals", asp=.5)
+# plot a line on X-axis for comparison. a=intercept,b=slope,h=yvalue,v=xvalue.
+abline(a=0,h=0,b=0)
+# Perform a Shapiro-Wilk test for normality of residuals
+shapiro.test(rich.podB.resids) # GOOD!! p-value = 0.72, data errors are normally distributed 
+# Perform Levene's Test for homogenity of variances
+leveneTest(Richness ~ pod, data=plantB, na.action=na.exclude) # p-val=0.96 variances among group are homogenous
+plot(density(rich.podB.resids)) 
+qqnorm(rich.podB.resids)
+qqline(rich.podB.resids)
+hist(rich.podB.resids)
+skew_xts <- skewness(rich.podB.resids)
+kurtosis(rich.podB.resids,method = 'sample')
+boxplot(Richness ~ pod,
+        ylab="Richness", xlab="pod", data = plantB) 
+### RESULT: There are differences of bacterial and archaeal richness among pods
+# Do Tukey's HSD Post Hoc Test
+rich_podB.hsd <- HSD.test(rich.podB, "pod", alpha = 0.05,group = T ,main = NULL,console=TRUE)
+rich_podB.hsd <- HSD.test(rich.podB, "pod",alpha = 0.05, group = FALSE, main = NULL,console=TRUE)
+# Do Plot
+# add significance letters from HSD.test into box plot   
+rich_podB.hsd.summarized <- plantB %>% group_by(pod) %>% summarize(max.rich=max(Richness))
+rich_podB.letter <- rich_podB.hsd$groups
+rich_podB.letter$pod <- rownames(rich_podB.letter)
+rich_podB.hsd.summ <- left_join(rich_podB.letter,rich_podB.hsd.summarized, by='pod')  
+(rich.podB.plot <- ggplot(plantB, aes(x=pod, y=Richness))+
+                    geom_boxplot() +
+                    geom_jitter(height = 0, width = 0.1, alpha = 0.5)+
+                    theme_bw()+
+                    expand_limits(x = 0, y = 0)+
+                    labs(title = "B. Plant B")+
+                    geom_text(data=rich_podB.hsd.summ,aes(x=pod,y=2+max.rich,label=rich_podB.hsd.summ$groups),vjust=0)+
+                    theme(axis.text.x=element_text(size = 14),
+                          axis.text.y = element_text(size = 14),
+                          strip.text.y = element_text(size=18, face = 'bold'),
+                          plot.title = element_text(size = rel(2)),
+                          axis.title=element_text(size=18,face="bold"),
+                          plot.background = element_blank(),
+                          panel.grid.major = element_blank(),
+                          panel.grid.minor = element_blank()))
+
+ggsave("rich.podB.norm.tiff",
+       rich.podB.plot, device = "tiff",
+       width = 5, height =4, 
+       units= "in", dpi = 600)
+
+#. 3. Plant C
+rich.podC <- aov(plantC$Richness ~ pod, data = plantC)
+summary(rich.podC) #0.327   0.73
+# testing assumptions
+# Generate residual and predicted values
+rich.podC.resids <- residuals(rich.podC)
+rich.podC.preds <- predict(rich.podC)
+# Look at a plot of residual vs. predicted values
+plot(rich.podC.resids ~ rich.podC.preds, xlab = "Predicted Values", ylab = "Residuals", asp=.5)
+# plot a line on X-axis for comparison. a=intercept,b=slope,h=yvalue,v=xvalue.
+abline(a=0,h=0,b=0)
+# Perform a Shapiro-Wilk test for normality of residuals
+shapiro.test(rich.podC.resids) # GOOD!! p-value = 0.13, data errors are normally distributed 
+# Perform Levene's Test for homogenity of variances
+leveneTest(Richness ~ pod, data=plantC) # p-val=0.66 variances among group are homogenous
+plot(density(rich.podC.resids)) 
+plot(rich.podC,1)
+qqnorm(rich.podC.resids)
+qqline(rich.podC.resids)
+hist(rich.podC.resids)
+skew_xts <- skewness(rich.podC.resids)
+kurtosis(rich.podC.resids,method = 'sample')
+boxplot(Richness ~ pod,
+        ylab="Richness", xlab="pod", data = plantC) 
+### RESULT: There are no differences of bacterial and archaeal richness among pods
+(rich.podC.plot <- ggplot(plantC, aes(x=pod, y=Richness))+
+                    geom_boxplot() +
+                    geom_jitter(height = 0, width = 0.1, alpha = 0.5)+
+                    theme_bw()+
+                     expand_limits(x = 0, y = 0)+
+                    labs(title = "C. Plant C")+
+                    # geom_text(data=new.richness.summarized,aes(x=Site,y=32+max.Richness,label=new.richness.summarized$groups),vjust=0)+
+                    theme(axis.text.x=element_text(size = 14),
+                          axis.text.y = element_text(size = 14),
+                          strip.text.y = element_text(size=18, face = 'bold'),
+                          plot.title = element_text(size = rel(2)),
+                          axis.title=element_text(size=18,face="bold"),
+                          plot.background = element_blank(),
+                          panel.grid.major = element_blank(),
+                          panel.grid.minor = element_blank()))
+ggsave("rich.podC.norm.tiff",
+       rich.podC.plot, device = "tiff",
+       width = 5, height =4, 
+       units= "in", dpi = 600)
+
+#######################################################################################################################################################3
 
 ### Rarefaction curves ######
 # using GlobalPatterns
