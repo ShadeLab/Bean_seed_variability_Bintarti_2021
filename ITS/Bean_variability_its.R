@@ -54,47 +54,58 @@ library(tibble)
 library(fitdistrplus)
 
 # SET THE WORKING DIRECTORY
-setwd('/Users/arifinabintarti/Documents/Bean_seed_variability_Bintarti_2020/01162021_NewITS_nejc/')
+setwd('/Users/arifinabintarti/Documents/PAPER/Bean_seed_variability_Bintarti_2020/ITS/')
 wd <- print(getwd())
 otu.its <- read.table('otu_table_ITS_UPARSE.txt', sep='\t', header=T, row.names = 1)
 dim(otu.its) ## total otu= 87, otu table still has Mock, NC, and PC in the sample
 
+#select only biological sample from otu table
+otu.its.unfil <- otu.its[,1:45] #unselect Mock, NC, and PC from the otu table
+dim(otu.its.unfil)
+#otu.its.unfil <- column_to_rownames(otu.its.unfil, var = "OTUid")
+sort(rowSums(otu.its.unfil, na.rm = FALSE, dims = 1), decreasing = F)
+
+# remove OTUs that do not present in sample
+otu.its1.unfil=otu.its.unfil[which(rowSums(otu.its.unfil) > 0),]
+dim(otu.its1.unfil) # otu= 76
+sort(rowSums(otu.its1.unfil, na.rm = FALSE, dims = 1), decreasing = F)
+
 #read taxonomy
 taxonomy.its = read.csv("ITSotu_taxonomy_RDP.csv", header=T)
-dim(taxonomy.its) #still contains plantae taxa and contaminant microbial taxa
+dim(taxonomy.its) #83 otus, still contains plantae taxa and contaminant microbial taxa
 
 #read the metadata
 map.its <- read.csv("bean.var.map.its.csv")
 
 #merge 'otu.its' with 'taxonomy.its' to have match otu and taxonomy table
-otu.its <- rownames_to_column(otu.its, var = "OTUid")
-otu.tax.its <- merge(otu.its,taxonomy.its, by = "OTUid")
-dim(otu.tax.its) #83 otus
+otu.its1.unfil <- rownames_to_column(otu.its1.unfil, var = "OTUid")
+otu.tax.its <- merge(otu.its1.unfil,taxonomy.its, by = "OTUid")
+dim(otu.tax.its) #72 fungal otus before plant and microbial contaminants removal
 
 #filter out the plantae taxa from the 'otu.tax.its' table
 otu.fil <- filter(otu.tax.its, Kingdom != "Plantae")
-dim(otu.fil) #70 otus, filter out 13 plantae taxa
+dim(otu.fil) #59 otus, filter out 13 plantae taxa
 
 #separate the otu table and taxonomy table
-otu.tab <- data.frame(otu.fil[,c(1:49)])
-dim(otu.tab)# 70otus,
-tax.tab <- data.frame(otu.fil[,c(1,50:56)], row.names = 1)
-dim(tax.tab)
+otu.tab <- data.frame(otu.fil[,c(1:46)])
+dim(otu.tab)# 59otus,
+tax.tab <- data.frame(otu.fil[,c(1,47:53)])
+head(tax.tab)
 
-#select only biological sample from the otu table
-otu.fg <- otu.tab[,1:46] #unselect Mock, NC, and PC from the otu table
-otu.fg <- column_to_rownames(otu.fg, var = "OTUid")
-sort(rowSums(otu.fg, na.rm = FALSE, dims = 1), decreasing = F)
-
-# remove OTUs that do not present in sample
-otu.fg1=otu.fg[which(rowSums(otu.fg) > 0),]
-dim(otu.fg1) # filter out 11 otus, otu= 59, otu table before normalization using metagenomeSeq package and before decontamination
+#fungal otu
+otu.fg1 <- column_to_rownames(otu.tab, var = "OTUid")
 sort(rowSums(otu.fg1, na.rm = FALSE, dims = 1), decreasing = F)
+head(otu.fg1)
+dim(otu.fg1) #59 plant filtered otus; otu table before normalization using metagenomeSeq package and before decontamination
 
 #otu table of the negative control
-otu.its <- column_to_rownames(otu.its, var = "OTUid")
+#otu.its <- column_to_rownames(otu.its, var = "OTUid")
 otu.its.NC <- otu.its[,"NC",drop=FALSE]#only negative control
 otu.its.NC
+
+######################################################################################################################################
+######################################################################################################################################
+
 
 ############## remove contaminant reads/otus from otu fg using microDecon package ##################
 
@@ -118,7 +129,8 @@ dim(otu.its.dec.table) # otu = 57
 #remove NC from the otu.dec.table 
 otu.its.dec.table <- otu.its.dec.table[,c(1,3:47)]
 otu.its.dec.table
-dim(otu.its.dec.table) #there are 57 otus and 45 samples
+dim(otu.its.dec.table)#there are 57 otus and 45 samples
+head(otu.its.dec.table)
 #use first column as a rownames
 #otu.its.dec.table <- data.frame(otu.its.dec.table, row.names = 1)
 #otu.its.dec.table
@@ -126,19 +138,23 @@ dim(otu.its.dec.table) #there are 57 otus and 45 samples
 #head(sort(rowSums(otu.its.dec.table, na.rm = FALSE, dims = 1), decreasing = F))
 
 #merge 'otu.its.dec.table' with 'tax.tab' to have match otu and taxonomy table
-tax.tab <- rownames_to_column(tax.tab, var = "OTUid")
+#tax.tab <- rownames_to_column(tax.tab, var = "OTUid")
 otu.tax.fil <- merge(otu.its.dec.table,tax.tab, by = "OTUid")
 dim(otu.tax.fil) #57 otus
 
 #separate the taxonomy from the otu table
 otu.tax.fil <- column_to_rownames(otu.tax.fil, var = "OTUid")
-otu.fil <- data.frame(otu.tax.fil[,c(1:46)], row.names = 1)
+otu.fil <- data.frame(otu.tax.fil[,c(1:45)])
 dim(otu.fil)
-tax.fil <- data.frame(otu.tax.fil[,c(1,47:53)], row.names = 1)
+tax.fil <- data.frame(otu.tax.fil[,c(46:52)])
 
 #write to  excel to edit the blank with the last taxonomic level possible 
-write.csv(tax.fil, file = "tax.fil.csv")
+#write.csv(tax.fil, file = "tax.fil.csv")
 #make the taxonomic csv file "tax.fil.edited.csv"
+
+
+######################################################################################################################################
+######################################################################################################################################
 
 
 ############# Reads normalization using metagnomeSeq ####################
@@ -147,7 +163,7 @@ library(metagenomeSeq)
 #Creating a MRexperiment object
 head(otu.its.dec.table) #make sure you have "OTUid" as the first column
 dim(otu.its.dec.table) # 57 OTUs
-write.table(otu.its.dec.table, file = "otu.its.dec.table.txt", col.names = TRUE, row.names = F, quote = FALSE, sep = "\t")
+#write.table(otu.its.dec.table, file = "otu.its.dec.table.txt", col.names = TRUE, row.names = F, quote = FALSE, sep = "\t")
 
 #load count data (otu.dec.its)
 otu.dec.its <- loadMeta("otu.its.dec.table.txt", sep = "\t")
@@ -156,7 +172,7 @@ dim(otu.dec.its$counts) #[1] 57 45
 
 #load taxonomy
 tax.fil.edited = read.csv("tax.fil.edited.csv", sep=',', header=T)
-write.table(tax.fil.edited, file = "tax.fil.edited.txt", col.names = TRUE, row.names = F, quote = FALSE, sep = "\t")
+#write.table(tax.fil.edited, file = "tax.fil.edited.txt", col.names = TRUE, row.names = F, quote = FALSE, sep = "\t")
 #loading taxonomy table
 tax.dec.its <- read.delim("tax.fil.edited.txt", stringsAsFactors = FALSE, sep = "\t")
 tax.dec.its <- tax.dec.its %>%
@@ -165,7 +181,7 @@ tax.dec.its <- tax.dec.its %>%
 dim(tax.dec.its) #[1] 57 otus  7
 #loading metadata
 its.map <- read.csv("bean.var.map.its.csv")
-write.table(its.map, file = "bean.var.map.its.txt",col.names = TRUE, row.names = F, quote = FALSE, sep = "\t")
+#write.table(its.map, file = "bean.var.map.its.txt",col.names = TRUE, row.names = F, quote = FALSE, sep = "\t")
 meta.its <- loadPhenoData("bean.var.map.its.txt", sep="\t",tran = TRUE)
 meta.its
 #create one MRexperiment object 
@@ -196,6 +212,134 @@ head(sort(colSums(fgnorm, na.rm = FALSE, dims = 1), decreasing = FALSE))
 head(sort(rowSums(fgnorm, na.rm = FALSE, dims = 1), decreasing = FALSE))
 #write.table(fgnorm, "normalised_logged_fg_otu.txt", sep = "\t", quote = F)
 dim(fgnorm) #there are 57 otus and 45 samples
+
+
+
+######################################################################################################################################
+######################################################################################################################################
+
+### Rarefaction curves ######
+# using GlobalPatterns
+
+library(phyloseq)
+library(graphics)
+
+
+# 1. rarefaction curve for decontaminated non-normalized OTU table
+
+otu.fil # decontaminated non-normalized OTU table
+
+its.map.rare <- its.map[its.map$Sample.id%in%colnames(otu.fil),]
+curve_colors <- rep("darkgreen", ncol(otu.fil))
+curve_colors[its.map.rare$Plant=="A"] <- "#440154FF"
+curve_colors[its.map.rare$Plant=="B"] <- "#1F968BFF"
+curve_colors[its.map.rare$Plant=="C"] <- "#FDE725FF"
+
+lty <- c("solid", "solid", "solid")
+
+setEPS()
+postscript("Fig.1A Fungal rarecurve decontaminated non-normalized.eps", height = 5, width = 5)
+rarecurve(t(otu.fil), step=1, label=F, col = curve_colors, lty=lty, lwd=2, xlab = "Reads", 
+                           ylab = "Fungal OTUs", main="A", adj=0)
+# Add a legend
+legend(4000, 5, legend=c("A", "B", "C"),
+       col=c("#440154FF", "#1F968BFF","#FDE725FF"), lty = lty, lwd=2, title = "Plant")
+dev.off()
+graphics.off()
+
+
+# 2. rarefaction curve for undecontaminated non-normalized OTU table
+
+# read the otu table
+#otu.fg1 # undecontaminated non-normalized OTU table
+#otu.fg1 <- column_to_rownames(otu.fg1, var = "OTUid")
+
+#setEPS()
+#postscript("Fig.1B Fungal rarecurve undecontaminated non-normalized.eps", height = 5, width = 5)
+#rarecurve(t(otu.fg1), step=1, label=F, col = curve_colors, lty=lty, lwd=2, xlab = "Reads", ylab = "Fungal OTUs", main="B", adj=0)
+# Add a legend
+#legend(7000, 6, legend=c("A", "B", "C"),col=c("#440154FF", "#1F968BFF","#FDE725FF"), lty = lty, lwd=2, title = "Plant")
+#dev.off()
+
+
+######################################################################################################################################
+######################################################################################################################################
+
+
+# Make Rank Abundance Curve 
+
+library(phyloseq)
+
+# load normalized otu table
+fgnorm
+dim(fgnorm)
+head(fgnorm)
+#otu.norm <- column_to_rownames(otu.norm, var = "OTUid")
+
+# fungal taxonomy
+head(tax.fil.edited)
+tax.fil.edited <- column_to_rownames(tax.fil.edited, var = "OTUid")
+dim(tax.fil.edited)
+rownames(tax.fil.edited) <- rownames(fgnorm)
+# make phyloseq otu table and taxonomy
+otu.its.phyl = otu_table(fgnorm, taxa_are_rows = TRUE)
+tax.its.phyl = tax_table(as.matrix(tax.fil.edited))
+
+# make phyloseq map
+rownames(its.map) <- its.map$Sample.id
+its.map.phyl <- sample_data(its.map)
+
+# make phyloseq object  
+
+its.phyl.obj <- merge_phyloseq(otu.its.phyl,tax.its.phyl,its.map.phyl)
+its.phyl.obj
+
+# this converts taxa counts in each sample to a percentage
+phyloTemp2.its <-  transform_sample_counts(its.phyl.obj, function(x) x/sum(x))
+clusterData2.its <-  psmelt(phyloTemp2.its)
+
+# calculating mean relative abundance per plant
+relabund.perplant2.its= clusterData2.its %>%
+  group_by(Plant, OTU) %>%
+  summarise(ra=mean(Abundance)) %>%
+  arrange(desc(ra),.by_group = TRUE) %>%
+  mutate(rank = row_number(-ra))
+
+relabund.perplant2.its$Plant <- as.factor(relabund.perplant2.its$Plant)
+
+# plotting
+rank.abund2.its <- ggplot(relabund.perplant2.its,aes(x=rank,y=ra, colour=Plant)) +
+  geom_line(aes(group = Plant), size=1.2) +
+  scale_colour_viridis(discrete = T)+
+  labs(title = "B")+
+  theme_bw()+
+  theme(axis.text.x=element_text(size = 14),
+        axis.text.y = element_text(size = 14),
+        strip.text.y = element_text(size=18, face = 'bold'),
+        plot.title = element_text(size =14 ,face='bold',hjust = 0.5),
+        axis.title = element_text(size=13,face="bold"),
+        #legend.title = element_text(size=15),
+        plot.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())+
+        xlab("\nRank") +  ylab("Fungal Relative Abundance")+
+        guides(colour=guide_legend(title.position = "top", nrow = 1, byrow = T,title.hjust =0.5))
+rank.abund2.its
+ggsave("Fig.2.Fungal rankabund curve.eps",
+       rank.abund2.its, device = "eps",
+       width = 5, height =4.5, 
+       units= "in", dpi = 600)
+
+
+library(ggplot2)
+library(scales)
+
+
+
+######################################################################################################################################
+######################################################################################################################################
+
+
 
 
 ###### calculate alpha diversity  ##########
@@ -288,14 +432,17 @@ fg.rich.plant <- ggplot(its.map, aes(x=Plant, y=Richness, fill=Plant))+
                     geom_jitter(position = position_jitter(width = 0.1, height = 0, seed=13), alpha=0.5)+
                     theme_bw()+
                     expand_limits(x = 0, y = 0)+
-                    labs(title = "A")+
+                    labs(title = "E")+
+                    ylab("Fungal<br>Richness")+
+                    xlab("\nPlant")+
                     #geom_text(data=sum_rich_plant_new, aes(x=plant,y=2+max.rich,label=Letter), vjust=0)+
                     theme(legend.position="none",
                           axis.text.x=element_text(size = 14),
                           axis.text.y = element_text(size = 14),
                           strip.text.y = element_text(size=18, face = 'bold'),
-                          plot.title = element_text(size = rel(2)),
-                          axis.title=element_text(size=18,face="bold"),
+                          plot.title = element_text(size = 14, face = 'bold'),
+                          axis.title.x=element_text(size=15,face="bold"),
+                          axis.title.y = element_markdown(size=15,face="bold"),
                           plot.background = element_blank(),
                           panel.grid.major = element_blank(),
                           panel.grid.minor = element_blank())
@@ -317,22 +464,26 @@ fg.rich.pod <- ggplot(its.map, aes(x=Pod, y=Richness, fill = Pod))+
                     geom_jitter(position = position_jitter(width = 0.1, height = 0, seed=13), alpha=0.5)+
                     theme_bw()+
                     expand_limits(x = 0, y = 0)+
-                    labs(title = "B")+
+                    labs(title = "F")+
+                    xlab("\nPod")+
                     #geom_text(data=new.rich_pod.summarized,aes(x=pod,y=0.5+max.rich,label=new.rich_pod.summarized$groups),vjust=0)+
                     theme(legend.position="none",
                           axis.text.x=element_text(size = 14),
-                          axis.text.y = element_text(size = 14),
-                          strip.text.y = element_text(size=18, face = 'bold'),
-                          plot.title = element_text(size = rel(2)),
-                          axis.title=element_text(size=18,face="bold"),
+                          axis.text.y = element_blank(),
+                          strip.text.y = element_blank(),
+                          axis.ticks.y = element_blank(),
+                          plot.title = element_text(size = 14,face =  'bold'),
+                          axis.title.x =element_text(size=15,face="bold"),
+                          axis.title.y = element_blank(),
                           plot.background = element_blank(),
                           panel.grid.major = element_blank(),
                           panel.grid.minor = element_blank())
 fg.rich.pod
 fg.rich.pod1 <- fg.rich.pod +
   facet_grid(. ~ Plant, scales="free_x")+
-  theme(strip.background =element_rect(fill="grey"))+
-  theme(strip.text = element_text(colour = 'black', size = 14, face = 'bold'))
+  theme(strip.text = element_blank())
+  #theme(strip.background =element_rect(fill="grey"))+
+  #theme(strip.text = element_text(colour = 'black', size = 14, face = 'bold'))
 fg.rich.pod1
 
 ggsave("Fig.3B.Fungal richness among pods.tiff",
@@ -505,6 +656,28 @@ ggsave("Fig.4.Fungal relative abund.eps",
        width = 8.6, height =5, 
        units= "in", dpi = 600)
 
+fg.genus <- tax_glom(its.phyl.obj, taxrank = "Genus", NArm = F)
+fg.genus.ra <- transform_sample_counts(fg.genus, function(x) x/sum(x))
+fg.genus.ra
+###create dataframe from phyloseq object
+library(data.table)
+df.fg.genus <- data.table(psmelt(fg.genus.ra))
+dim(df.fg.genus)
+# calculating mean relative abundance per genus
+mean.its.relabund.genus= df.fg.genus %>%
+  group_by(Genus) %>%
+  summarise(ra=mean(Abundance)) %>%
+  arrange(-ra)
+
+sum(mean.relabund.genus$ra)
+
+df.fg.cl <- data.table(psmelt(fg.cl.ra))
+mean.its.relabund.cl= df.fg.cl %>%
+  group_by(Class) %>%
+  summarise(ra=mean(Abundance)) %>%
+  arrange(-ra)
+
+
 # other: Fungal classes with mean relative abundances of less than 10 %
 
 ##############################################################################################################################
@@ -568,15 +741,16 @@ ggsave("Fig.5.Fungal PCoA plot tiff",
        width = 5, height =4, 
        units= "in", dpi = 600)
 
-set.seed(13)
+
 
 ######## Calculated the statistical analysis of beta diversity using nested permanova #########
 
-#adonis <- adonis(otu_dist ~ map$plant/map$pod, 
-                 #permutation=999,
-                 #method="jaccard", 
-                 #strata = NULL)
-#adonis
+set.seed(13)
+adonis.its <- adonis(otu_dist.its ~ its.map$Plant/its.map$Pod, 
+                 permutation=999,
+                 method="jaccard", 
+                 strata = NULL)
+adonis.its
 #install.packages("BiodiversityR")
 library(BiodiversityR)
 
@@ -594,7 +768,7 @@ nested.npmanova(otu_dist.its ~ Plant + Pod,
 ## Betadisper 
 groups.plant.its <- factor(c(rep("A",11),rep("B",23), rep("C",11)))
 otu_dist.its <- vegdist(t(fgnorm_PA), binary = TRUE, method = "jaccard") #Sorensen
-mod.its <- betadisper(otu_dist.its, groups.plant)
+mod.its <- betadisper(otu_dist.its, groups.plant.its)
 mod.its
 mod.its$distances
 dispersion.its <- as.data.frame(mod.its$distance)
@@ -641,94 +815,152 @@ ggsave("Fig.6.Fungal betadisper.tiff",
 
 #####################################################################################################################
 
-# Make Rank Abundance Curve 
+######################################################################################################################################################
+######################################################################################################################################################
+# Read Proportion of Chloroplast and mitochondria 
 
-# make phyloseq object  
 
-its.phyl.obj <- merge_phyloseq(otu.its.phyl,tax.its.phyl,its.map.phyl)
-its.phyl.obj
+#read the unfiltered otu table 
+otu.unfil <- read.table('OTU_table_tax.txt', sep='\t', header=T, row.names = 1)
+otu.unfil
+tax.unfil <- otu.unfil[,'taxonomy']
+tax.unfil
 
-# this converts taxa counts in each sample to a percentage
-phyloTemp2.its <-  transform_sample_counts(its.phyl.obj, function(x) x/sum(x))
-clusterData2.its <-  psmelt(phyloTemp2.its)
+#write.csv(tax.unfil, file = "taxonomy.unfil.csv")
+dim(otu.unfil)
+otu.unfil <- otu.unfil[,-51]
+dim(otu.unfil) # otu= 311, otu table still has Mock, NC, and PC in the sample
+sort(rowSums(otu.unfil, na.rm = FALSE, dims = 1), decreasing = F)
 
-# calculating mean relative abundance per plant
-relabund.perplant2.its= clusterData2.its %>%
-  group_by(Plant, OTU) %>%
-  summarise(ra=mean(Abundance)) %>%
-  arrange(desc(ra),.by_group = TRUE) %>%
-  mutate(rank = row_number(-ra))
+#read taxonomy
+taxonomy.unfil = read.csv("taxonomy.unfil.edit.csv", header=T)
+rownames(taxonomy.unfil) <- rownames(otu.unfil)
+dim(taxonomy.unfil)
 
-relabund.perplant2.its$Plant <- as.factor(relabund.perplant2.its$Plant)
+#read the metadata
+map <- read.csv("bean.var.map.csv")
 
-# plotting
-rank.abund2.its <- ggplot(relabund.perplant2.its,aes(x=rank,y=ra, colour=Plant)) +
-  geom_line(aes(group = Plant), size=1.2) +
-  scale_colour_viridis(discrete = T)+
-  labs(x="Rank", y="Relative Abundance")+
-  theme_bw()+
-  theme(axis.text.x=element_text(size = 14),
-        axis.text.y = element_text(size = 14),
-        strip.text.y = element_text(size=18, face = 'bold'),
-        plot.title = element_text(size = rel(2)),
-        axis.title = element_text(size=15,face="bold"),
-        legend.title = element_text(size=15),
-        plot.background = element_blank(),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank())
-rank.abund2.its
-ggsave("Fig.2.Fungal rankabund curve.eps",
-       rank.abund2.its, device = "eps",
-       width = 5, height =4.5, 
+#select only biological sample from otu table
+otu.bac.unfil <- otu.unfil[,1:47] #unselect Mock, NC, and PC from the otu table
+dim(otu.bac.unfil)
+sort(rowSums(otu.bac.unfil, na.rm = FALSE, dims = 1), decreasing = F)
+
+# remove OTUs that do not present in sample
+otu.bac1.unfil=otu.bac.unfil[which(rowSums(otu.bac.unfil) > 0),]
+dim(otu.bac1.unfil) # otu= 267, otu table before normalization using metagenomeSeq package and before decontamination
+sort(rowSums(otu.bac1.unfil, na.rm = FALSE, dims = 1), decreasing = F)
+
+# load the otu table
+head(otu.bac1.unfil)
+otu.bac1.unfil <- rownames_to_column(otu.bac1.unfil, var = "OTU.ID")
+
+# merge the taxonomy with otu table
+head(taxonomy.unfil)
+taxonomy.unfil <- rownames_to_column(taxonomy.unfil, var = "OTU.ID")
+otu.tax.unfil <- merge(otu.bac1.unfil, taxonomy.unfil, by="OTU.ID")
+dim(otu.tax.unfil)
+
+#select only the otu table and "Order"  & "Family"
+otu.tax.unfil.ed <- otu.tax.unfil[,c(1:48,52,53)]
+colnames(otu.tax.unfil.ed)
+
+#edit the taxonomy
+otu.tax.unfil.ed1 <- otu.tax.unfil.ed %>%
+    mutate(Taxonomy = case_when(Order == "Chloroplast" ~ 'Chloroplast',
+                                  Family == "Mitochondria" ~ 'Mitochondria',
+                                  TRUE ~ 'Bacteria/archaea')) %>%
+    mutate(Kingdom = case_when(Order == "Chloroplast" ~ 'Plant',
+                                  Family == "Mitochondria" ~ 'Plant',
+                                  TRUE ~ 'Bacteria/archaea'))
+
+tail(otu.tax.unfil.ed1)
+otu.tax.unfil.ed2 <- otu.tax.unfil.ed1[,c(1:48,51:52)]
+colnames(otu.tax.unfil.ed2)
+tail(otu.tax.unfil.ed2)
+
+long.dat <- gather(otu.tax.unfil.ed2, Sample, Read, A11:C74, factor_key = T)
+long.dat
+
+
+df.unfil <- long.dat %>%
+  group_by(Sample, Kingdom) %>%
+  summarize(read.number = sum(Read))
+df.unfil1 <- df.unfil %>% 
+  group_by(Sample) %>% 
+  mutate(percent= prop.table(read.number) * 100)
+
+with(df.unfil1, sum(percent[Sample ==  "A11"]))
+
+plot.unfil <- ggplot(df.unfil1, aes(x=Kingdom, y=percent, fill=Kingdom))+
+                    geom_violin() +
+                    #scale_fill_manual(labels = c("A1","A2", "A3","B1","B2","B3","B4","B5","B6","C5","C6","C7"),values=c("#440154FF", "#482677FF","#3F4788FF","#238A8DFF","#1F968BFF","#20A386FF","#29AF7FF","#3CBC75F","#56C667FF","#B8DE29FF","#DCE318FF","#FDE725FF"))+
+                    scale_fill_viridis(discrete = T)+
+                    geom_jitter(position = position_jitter(width = 0.1, height = 0, seed=13), alpha=0.5)+
+                    theme_bw()+
+                    expand_limits(x = 0, y = 0)+
+                    #geom_text(data=sum_rich_plant_new, aes(x=Plant,y=2+max.rich,label=Letter), vjust=0)+
+                    labs(title = "A")+
+                    ylab("Read Proportion (%)")+
+                    theme(legend.position="none",
+                          #axis.text.x=element_blank(),
+                          #axis.ticks.x = element_blank(),
+                          axis.title.x = element_blank(),
+                          axis.text= element_text(size = 14),
+                          strip.text = element_text(size=18, face = 'bold'),
+                          plot.title = element_text(size = 14, face = 'bold'),
+                          #axis.title.y=element_text(size=13,face="bold"),
+                          axis.title.y = element_markdown(size=15,face="bold"),
+                          plot.background = element_blank(),
+                          panel.grid.major = element_blank(),
+                          panel.grid.minor = element_blank())
+                          #plot.margin = unit(c(0, 0, 0, 0), "cm"))
+                          
+                          
+plot.unfil
+
+
+df.unfil.tax <- long.dat %>%
+  group_by(Sample, Taxonomy) %>%
+  summarize(read.number = sum(Read))
+df.unfil.tax1 <- df.unfil.tax %>% 
+  group_by(Sample) %>% 
+  mutate(percent= prop.table(read.number) * 100)
+
+install.packages("ggbeeswarm")
+library(ggbeeswarm)
+plot.unfil.tax <- ggplot(df.unfil.tax1, aes(x=Taxonomy, y=percent, fill=Taxonomy))+
+                    geom_violin() +
+                    #geom_beeswarm(dodge.width = 1, alpha = 0.3)+
+                    #scale_fill_manual(labels = c("A1","A2", "A3","B1","B2","B3","B4","B5","B6","C5","C6","C7"),values=c("#440154FF", "#482677FF","#3F4788FF","#238A8DFF","#1F968BFF","#20A386FF","#29AF7FF","#3CBC75F","#56C667FF","#B8DE29FF","#DCE318FF","#FDE725FF"))+
+                    #scale_fill_viridis(discrete = T)+
+                    geom_jitter(position = position_jitter(width = 0.1, height = 0, seed=13), alpha=0.3)+
+                    theme_bw()+
+                    expand_limits(x = 0, y = 0)+
+                    #geom_text(data=sum_rich_plant_new, aes(x=Plant,y=2+max.rich,label=Letter), vjust=0)+
+                    labs(title = "A")+
+                    ylab("Read Proportion (%)")+
+                    theme(legend.position="none",
+                          #axis.text.x=element_blank(),
+                          #axis.ticks.x = element_blank(),
+                          axis.title.x = element_blank(),
+                          axis.text= element_text(size = 14),
+                          strip.text = element_text(size=18, face = 'bold'),
+                          plot.title = element_text(size = 14, face = 'bold'),
+                          #axis.title.y=element_text(size=13,face="bold"),
+                          axis.title.y = element_markdown(size=15,face="bold"),
+                          plot.background = element_blank(),
+                          panel.grid.major = element_blank(),
+                          panel.grid.minor = element_blank())+
+                          #plot.margin = unit(c(0, 0, 0, 0), "cm"))
+                          stat_summary(fun="median",geom="point", size=7, color="red", shape=95)
+                          #width=1, position=position_dodge(),show.legend = FALSE)
+
+plot.unfil.tax
+setwd('/Users/arifinabintarti/Documents/Bean_seed_variability_Bintarti_2020/Figures')
+ggsave("chlomito.tiff",
+       plot.unfil.tax, device = "tiff",
+       width = 5.4, height =4.3, 
        units= "in", dpi = 600)
-
-###########################################################################################################################
-
-### Rarefaction curves ######
-# using GlobalPatterns
-
-library(phyloseq)
-library(graphics)
-
-
-
-# 1. rarefaction curve for decontaminated non-normalized OTU table
-
-otu.fil # decontaminated non-normalized OTU table
-
-its.map.rare <- its.map[its.map$Sample.id%in%colnames(otu.fil),]
-curve_colors <- rep("darkgreen", ncol(otu.fil))
-curve_colors[its.map.rare$Plant=="A"] <- "#440154FF"
-curve_colors[its.map.rare$Plant=="B"] <- "#1F968BFF"
-curve_colors[its.map.rare$Plant=="C"] <- "#FDE725FF"
-
-lty <- c("solid", "solid", "solid")
-
-setEPS()
-postscript("Fig.1A Fungal rarecurve decontaminated non-normalized.eps", height = 5, width = 5)
-rarecurve(t(otu.fil), step=1, label=F, col = curve_colors, lty=lty, lwd=2, xlab = "Reads", 
-                           ylab = "Fungal OTUs", main="A", adj=0)
-# Add a legend
-legend(4000, 5, legend=c("A", "B", "C"),
-       col=c("#440154FF", "#1F968BFF","#FDE725FF"), lty = lty, lwd=2, title = "Plant")
-dev.off()
-graphics.off()
-
-
-# 2. rarefaction curve for undecontaminated non-normalized OTU table
-
-# read the otu table
-otu.fg1 # undecontaminated non-normalized OTU table
-otu.fg1 <- column_to_rownames(otu.fg1, var = "OTUid")
-
-setEPS()
-postscript("Fig.1B Fungal rarecurve undecontaminated non-normalized.eps", height = 5, width = 5)
-rarecurve(t(otu.fg1), step=1, label=F, col = curve_colors, lty=lty, lwd=2, xlab = "Reads", 
-                           ylab = "Fungal OTUs", main="B", adj=0)
-# Add a legend
-legend(7000, 6, legend=c("A", "B", "C"),
-       col=c("#440154FF", "#1F968BFF","#FDE725FF"), lty = lty, lwd=2, title = "Plant")
-dev.off()
 
 
 

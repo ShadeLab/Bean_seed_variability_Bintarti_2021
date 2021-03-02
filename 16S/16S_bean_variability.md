@@ -154,7 +154,7 @@ OTU_jsn.biom
 ```
 # Part II: Switch to QIIME 1.9.1
 
-## 1) Convert OTU_table.txt. to OTU_table.from_txt_json.biom
+## 1) Convert OTU_table.txt to OTU_table.from_txt_json.biom
 ```
 biom convert -i OTU_table.txt -o OTU_table.biom --table-type="OTU table" --to-json
 

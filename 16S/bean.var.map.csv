@@ -1,4 +1,4 @@
-sample.id,plant,pod,seed,dryseed_weight_g
+Sample.id,Plant,Pod,Seed,Dryseed_weight_g
 A11,A,A1,1,0.38
 A12,A,A1,2,0.36
 A13,A,A1,3,0.4

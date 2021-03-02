@@ -63,7 +63,7 @@ library(lme4)
 library(nlme)
 
 # SET THE WORKING DIRECTORY
-# setwd('/Users/arifinabintarti/Documents/Bean_seed_variability_Bintarti_2020/16S')
+setwd('/Users/arifinabintarti/Documents/PAPER/Bean_seed_variability_Bintarti_2020/16S')
 wd <- print(getwd())
 otu <- read.table('OTU_table_tax_filt.txt', sep='\t', header=T, row.names = 1)
 otu
@@ -94,6 +94,9 @@ sort(rowSums(otu.bac1, na.rm = FALSE, dims = 1), decreasing = F)
 #otu table of the negative control
 otu.NC <- otu[,"NC",drop=FALSE]#only negative control
 otu.NC
+
+######################################################################################################################################
+######################################################################################################################################
 
 ############## remove contaminant reads/otus from otu bac using microDecon package ##################
 
@@ -137,6 +140,9 @@ sort(rowSums(decon.otu, na.rm = FALSE, dims = 1), decreasing = F)
 #sort(rowSums(otu1, na.rm = FALSE, dims = 1), decreasing = F)
 #dim(otu1) #211 otus, 47samples, clean otu table after decontamination before reads normalization
 
+######################################################################################################################################
+######################################################################################################################################
+
 ############## Reads normalization using metagnomeSeq ####################
 
 #install and load metagenomeSeq package
@@ -150,7 +156,8 @@ decon.otu
 
 #loading metadata
 map <- read.csv("bean.var.map.csv")
-map <- column_to_rownames(map, var="sample.id")
+map <- column_to_rownames(map, var="Sample.id")
+View(map)
 
 #create MRexperiment object 
 phenotypeData <- AnnotatedDataFrame(map)
@@ -190,11 +197,227 @@ otu.norm <- rownames_to_column(otu.norm, var="OTU.ID")
 #write.table(otu.norm, "otu_norm.txt", sep = "\t", quote = F, row.names = F)
 dim(otu.norm) #there are 211 otus and 47 samples
 
+######################################################################################################################################
+######################################################################################################################################
+
+######### FIGURE 1A & 1B ###############
+
+### Rarefaction curves ######
+# using GlobalPatterns
+
+library(phyloseq)
+
+# 1. rarefaction curve for decontaminated non-normalized OTU table
+
+decon.otu # decontaminated non-normalized OTU table
+# make phyloseq otu table and taxonomy
+#otu1.phyl = otu_table(decon.otu, taxa_are_rows = TRUE)
+#tax.phyl = tax_table(as.matrix(tax))
+
+# make phyloseq map
+#rownames(bean.map) <- bean.map$sample.id
+#map.phyl <- sample_data(bean.map)
+
+# make phyloseq object
+
+#phyl.obj1 <- merge_phyloseq(otu1.phyl,tax.phyl,map.phyl)
+#phyl.obj1
+
+#setEPS()
+#postscript("bacterial rarecurve.eps", height = 5, width = 5)
+#rarecurve(t(otu_table(phyl.obj1)), 
+                           #step=1000, cex=0.5,
+                           #xlab = "Reads", 
+                           #ylab = "Bacterial/archaeal OTUs", col = curve_colors)
+#dev.off()
+
+bean.map <- rownames_to_column(map, var="Sample.id")
+map_16S <- bean.map[bean.map$Sample.id%in%colnames(decon.otu),]
+View(map_16S)
+curve_colors <- rep("darkgreen", ncol(decon.otu))
+curve_colors[map_16S$plant=="A"] <- "#440154FF"
+curve_colors[map_16S$plant=="B"] <- "#1F968BFF"
+curve_colors[map_16S$plant=="C"] <- "#FDE725FF"
+
+lty <- c("solid", "solid", "solid")
+
+View(curve_colors)
+#setEPS()
+#postscript("bacterial rarecurve decontaminated non-normalized.eps", height = 5, width = 5)
+#rarecurve(t(decon.otu), step=1, label=F, col = curve_colors, lty=lty, lwd=2, xlab = "Reads", ylab = "Bacterial/archaeal OTUs")
+# Add a legend
+#legend(2500, 20, legend=c("A", "B", "C"),col=c("#440154FF", "#1F968BFF","#FDE725FF"), lty = lty, lwd=2, title = "Plant")
+#dev.off()
+#graphics.off()
+
+######################################################################################################################################
+######################################################################################################################################
+
+##### Fig. 1 Make Rarefaction Plots of Bacteria and Fungi in the Same Panel######
+
+setwd('/Users/arifinabintarti/Documents/Bean_seed_variability_Bintarti_2020/Figures')
+
+setEPS()
+postscript("Fig.1.eps", height =4.5 , width = 8)
+par(oma = c(1.5,0,0,0))
+par(mfrow=c(1,2))
+rarecurve(t(decon.otu), step=1, label=F, col = curve_colors, lty=lty, lwd=2, xlab = "Reads", 
+                           ylab = "Bacterial/archaeal OTUs", font.lab=2, main="A")
+rarecurve(t(otu.fil), step=1, label=F, col = curve_colors, lty=lty, lwd=2, xlab = "Reads", 
+                           ylab = "Fungal OTUs", font.lab=2, main="B")
+par(fig = c(0, 1, 0, 1), oma = c(0, 0, 0, 0), mar = c(0, 0, 0, 0), new = TRUE)
+plot(0, 0, type = "n", bty = "n", xaxt = "n", yaxt = "n")
+legend("bottom", c("A", "B", "C"), xpd = TRUE, horiz = TRUE, inset = c(0, 
+    0), bty = "n", col=c("#440154FF", "#1F968BFF","#FDE725FF"), cex = 0.8, 
+    lty = lty, lwd = 2, title = "Plant")
+dev.off()
+
+#setEPS()
+#postscript("Fig.1.eps", height = 5, width = 10)
+#par(mfrow=c(1,2), xpd=NA)
+#rarecurve(t(decon.otu), step=1, label=F, col = curve_colors, lty=lty, lwd=2, xlab = "Reads", ylab = "Bacterial/archaeal OTUs", main="A")
+#legend(2500, 20, legend=c("A", "B", "C"),col=c("#440154FF", "#1F968BFF","#FDE725FF"), lty = lty, lwd=2, title = "Plant")
+#rarecurve(t(otu.fil), step=1, label=F, col = curve_colors, lty=lty, lwd=2, xlab = "Reads", ylab = "Fungal OTUs", main="B")
+#legend(4000, 5, legend=c("A", "B", "C"),col=c("#440154FF", "#1F968BFF","#FDE725FF"), lty = lty, lwd=2, title = "Plant")
+######################################################################################################################################
+######################################################################################################################################
+
+# 2. rarefaction curve for undecontaminated non-normalized OTU table
+
+# read the otu table
+#otu.bac1 # undecontaminated non-normalized OTU table
+
+#setEPS()
+#postscript("bacterial rarecurve undecontaminated non-normalized.eps", height = 5, width = 5)
+#rarecurve(t(otu.bac1), step=1, label=F, col = curve_colors, lty=lty, lwd=2, xlab = "Reads", ylab = "Bacterial/archaeal OTUs")
+# Add a legend
+#legend(2500, 20, legend=c("A", "B", "C"), col=c("#440154FF", "#1F968BFF","#FDE725FF"), lty = lty, lwd=2, title = "Plant")
+#dev.off()
+
+######################################################################################################################################
+######################################################################################################################################
+
+## Rank-abundance Curves
+
+#install.packages("goeveg")
+#library(goeveg)
+#racurve(t(otu.norm), main = "Rank-abundance diagram")
+#racurves(t(decon.otu), main = "Rank-abundance diagram", bw=F)
+
+# OR
+#install.packages("BiodiversityR")
+#library(BiodiversityR)
+#RankAbun.1 <- rankabundance(t(decon.otu))
+#RankAbun.1
+#rankabunplot(RankAbun.1,scale='abundance', addit=FALSE, specnames=c(1,2,3))
+#bean.map$Plant <- as.factor(bean.map$Plant)
+#bean.map$Pod <- as.factor(bean.map$Pod)
+#rankabuncomp(t(decon.otu), y=bean.map, factor='Plant', type = "l",scale='proportion', legend=T, rainbow = T)
+
+# OR
+#install.packages("remotes")
+#remotes::install_github("MadsAlbertsen/ampvis2",force = T)
+#library(ampvis2)
+
+# make ampvis data
+# read the otu table and tax table
+#decon.otu.tax <- cbind(decon.otu, tax)
+#dim(decon.otu.tax)
+# change "Domain" to "Kingdom"
+#names(decon.otu.tax)[names(decon.otu.tax) == "Domain"] <- "Kingdom"
+# load the amp data
+#amp.data <- amp_load(decon.otu.tax,bean.map,fasta = NULL,tree = NULL,pruneSingletons = FALSE)
+# generate rank abundance curve
+#amp_rankabundance(amp.data, group_by="plant", showSD = TRUE, log10_x = F)
+
+
+# OR
+# using phyloseq
+
+# make phyloseq object of decontaminated normalized otu table
+
+# load normalized otu table
+otu.norm
+head(otu.norm)
+otu.norm <- column_to_rownames(otu.norm, var = "OTU.ID")
+
+# bacterial taxonomy
+head(tax)
+#tax <- column_to_rownames(tax, var = "OTU.ID")
+rownames(tax) <- rownames(otu.norm)
+# make phyloseq otu table and taxonomy
+otu.phyl = otu_table(otu.norm, taxa_are_rows = TRUE)
+tax.phyl = tax_table(as.matrix(tax))
+
+# make phyloseq map
+rownames(bean.map) <- bean.map$Sample.id
+map.phyl <- sample_data(bean.map)
+
+# make phyloseq object  
+
+phyl.obj <- merge_phyloseq(otu.phyl,tax.phyl,map.phyl)
+phyl.obj
+
+# this converts taxa counts in each sample to a percentage
+phyloTemp2 <-  transform_sample_counts(phyl.obj, function(x) x/sum(x))
+clusterData2 <-  psmelt(phyloTemp2)
+
+# calculating mean relative abundance per plant
+relabund.perplant2= clusterData2 %>%
+  group_by(Plant, OTU) %>%
+  summarise(ra=mean(Abundance)) %>%
+  arrange(desc(ra),.by_group = TRUE) %>%
+  mutate(rank = row_number(-ra))
+
+relabund.perplant2$Plant <- as.factor(relabund.perplant2$Plant)
+
+# plotting
+library(viridis)
+rank.abund2 <- ggplot(relabund.perplant2,aes(x=rank,y=ra, colour=Plant)) +
+  geom_line(aes(group = Plant), size=1.2) +
+  scale_colour_viridis(discrete = T)+
+  labs(title = "A")+
+  theme_bw()+
+  theme(legend.position = "none",
+        axis.text.x=element_text(size = 14),
+        axis.text.y = element_text(size = 14),
+        strip.text.y = element_text(size=18, face = 'bold'),
+        plot.title = element_text(size = 14, face='bold', hjust = 0.5),
+        axis.title = element_text(size=13,face="bold"),
+        #legend.title = element_text(size=15),
+        plot.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())+
+        xlab("\nRank") +
+        ylab("Bacterial/archaeal Relative Abundance\n")
+rank.abund2
+ggsave("rank.abund.normalized.eps",
+       rank.abund2, device = "eps",
+       width = 5, height =4.5, 
+       units= "in", dpi = 600)
+
+#####################################################################################################################################
+######################################################################################################################################
+
+##### Fig. 2 Make Rank-Abundance Plots of Bacteria and Fungi in the Same Panel######
+
+setwd('/Users/arifinabintarti/Documents/Bean_seed_variability_Bintarti_2020/Figures')
+RankAbund <- ggarrange(rank.abund2,rank.abund2.its, common.legend=T, legend="bottom", nrow=1,ncol = 2, align = "hv",
+                       legend.grob = get_legend(rank.abund2.its))
+RankAbund
+ggsave("Fig.2.eps",
+       RankAbund, device = "eps",
+       width = 8, height = 4.5, 
+       units= "in", dpi = 600)
+
+#####################################################################################################################################
+######################################################################################################################################
+
 ### calculate alpha diversity ###
 
 
 # calculate richness
-otu.norm <- column_to_rownames(otu.norm, var="OTU.ID")
+#otu.norm <- column_to_rownames(otu.norm, var="OTU.ID")
 s <- specnumber(otu.norm, MARGIN = 2) # richness
 rich <- as.data.frame(s)
 bean.map <- map
@@ -203,10 +426,10 @@ bean.map
 
 #add Faith's PD index
 pd.index <- read.table('PD.txt', sep='\t', header=T, row.names = 1)
-pd.index <- rownames_to_column(pd.index, "sample.id")
+pd.index <- rownames_to_column(pd.index, "Sample.id")
 #join Faith's PD index to the map 
-bean.map <- rownames_to_column(bean.map, var = "sample.id")
-bean.map <- merge(bean.map, pd.index, by="sample.id", all = T)
+bean.map <- rownames_to_column(bean.map, var = "Sample.id")
+bean.map <- merge(bean.map, pd.index, by="Sample.id", all = T)
 
 ###############################################################################################################################################
 ###############################################################################################################################################
@@ -215,20 +438,20 @@ bean.map <- merge(bean.map, pd.index, by="sample.id", all = T)
 
 # 1. Model fitting with linear mixed effect modelling with lme() function 
 
-bean.map$plant <- as.factor(bean.map$plant)
-bean.map$pod <- as.factor(bean.map$pod)
+bean.map$Plant <- as.factor(bean.map$Plant)
+bean.map$Pod <- as.factor(bean.map$Pod)
 
 set.seed(13)
 # Fit random intercept model
-model = lme(Richness ~ plant, random = ~ 1|pod, data=bean.map, method="REML")
+model = lme(Richness ~ Plant, random = ~ 1|Pod, data=bean.map, method="REML")
 summary(model)
 aov.mod = anova.lme(model, 
           type="marginal", 
           adjustSigma = FALSE)
 aov.mod
-anova(model, type='marginal')
+anova(model, type='marginal') #  for the unbalanced data
 # Fit random intercept and slope model
-model2 <- lme(Richness ~ plant, random = ~ plant | pod, data = bean.map, method = "REML")
+model2 <- lme(Richness ~ Plant, random = ~ Plant | Pod, data = bean.map, method = "REML")
 AIC(model, model2)
 anova(model, model2)
 # Random intercepts and slope model does not fit the data better Use simpler random intercepts model
@@ -242,7 +465,7 @@ aov.mod
 # Result: plant has significant effect to the bacterial/archaeal richness.
 
 # Test the significance of the random effect in the mixed effects model
-model.fixed = gls(Richness ~ plant, 
+model.fixed = gls(Richness ~ Plant, 
                   data=bean.map, 
                  method="REML")
 anova(model, 
@@ -253,7 +476,7 @@ hist(residuals(model),
      col="darkgray") # the model is skewed
 
 # Using the aov function for a nested anova
-fit = aov(Richness ~ plant + Error(pod), data=bean.map)
+fit = aov(Richness ~ Plant + Error(Pod), data=bean.map)
 summary(fit)
 
 # Using Mean Sq and Df values to get p-value for H = plant and Error = pod
@@ -277,67 +500,20 @@ library(sjPlot)
 plot_grid(plot_model(model, type = "diag"))
 kurtosis(resid(model),method = 'sample')
 # homoscedasticity
-leveneTest(residuals(model) ~ bean.map$plant) #Since the p value is greater than 0.05, we can say that the variance of the residuals is equal and therefore the assumption of homoscedasticity is met
-boxplot(residuals(model) ~ bean.map$plant) 
+leveneTest(residuals(model) ~ bean.map$Plant) #Since the p value is greater than 0.05, we can say that the variance of the residuals is equal and therefore the assumption of homoscedasticity is met
+boxplot(residuals(model) ~ bean.map$Plant) 
 
 # posthoc
 set.seed(13)
 posthoc = glht(model,
-               linfct = mcp(plant="Tukey"))
+               linfct = mcp(Plant="Tukey"))
 posthoc
 
 mcs = summary(posthoc,
               test=adjusted("BH"))
 mcs
 
-
-
 ### RESULT: There are significant differences of bacterial and archaeal richness among plants but not among pods
-
-# 2. Model fitting with linear mixed effect modelling with lmer function
-data = bean.map %>% group_by(plant, pod) %>% summarize(Richness = mean(Richness))
-data
-boxplot(Richness ~ plant, data)
-
-library(lme4)
-library(lmerTest)
-
-model.lmer = lmer(Richness ~ plant + (1|pod),
-             data=bean.map,
-             REML=TRUE)
-
-model.lmer1 <- lmer(Richness ~ plant + (plant|pod), 
-               data=bean.map, 
-               REML = TRUE)
-
-anova(model.lmer, model.lmer1)
-
-plot(model.lmer)
-plot(fitted(model.lmer), residuals(model.lmer, type = "pearson",
-    scaled = TRUE))
-qqnorm(resid(model.lmer))
-qqline(resid(model.lmer))
-
-summary(model.lmer)
-anova(model.lmer)
-
-mod1 = update(model.lmer, REML = FALSE)
-mod2 = update(model.lmer, ~. - plant, REML = FALSE)
-anova(mod1, mod2)
-
-rand(model.lmer)
-difflsmeans(model.lmer, 
-            test.effs="plant")
-
-
-# posthoc
-posthoc.lmer = glht(model.lmer,
-               linfct = mcp(plant="Tukey"))
-
-mcs.lmer = summary(posthoc.lmer,
-              test=adjusted("BH"))
-
-mcs.lmer
 
 # get the significant letter
 label <- cld(mcs,
@@ -345,17 +521,22 @@ label <- cld(mcs,
     decreasing=TRUE)
 
 label
+
 # make the dataframe of the group and the significant letter
 label.df <- as.data.frame(label$mcletters$Letters)
 names(label.df)[names(label.df) == "label$mcletters$Letters"] <- "Letter"
-label.df <- rownames_to_column(label.df, "plant")
+label.df <- rownames_to_column(label.df, "Plant")
 label.df
+
 # calculate the max value of the richness and put them in the same dataframe of the group and the significant letter
 sum_rich_plant <- bean.map %>%
-  group_by(plant) %>% 
+  group_by(Plant) %>% 
   summarize(max.rich=max(Richness))
-sum_rich_plant_new=left_join(label.df,sum_rich_plant, by='plant')
+sum_rich_plant_new=left_join(label.df,sum_rich_plant, by='Plant')
 sum_rich_plant_new
+
+##################################################################################################################################
+##################################################################################################################################
 
 # 1. Power analysis for richness using lmer
 
@@ -455,33 +636,47 @@ plot(tukey.rich, comparisons = TRUE)
 # get the signif letters
 rich.label <- multcomp::cld(tukey.rich,alpha = 0.05, Letters=letters)
 rich.label
+
 # calculate the max value of the richness and put them in the same dataframe of the group and the significant letter
 sum_rich_plant <- bean.map %>%
-  group_by(plant) %>% 
+  group_by(Plant) %>% 
   summarize(max.rich=max(Richness))
-sum_rich_plant_new=left_join(rich.label,sum_rich_plant, by='plant')
+sum_rich_plant_new=left_join(rich.label,sum_rich_plant, by='Plant')
 sum_rich_plant_new
 
-################################################################################################################################
+
+##################################################################################################################################
+##################################################################################################################################
+
 #plot richness among plants
 library(viridis)
-rich.plant <- ggplot(bean.map, aes(x=plant, y=Richness, fill=plant))+
+#install.packages("ggtext")
+library(ggtext)
+rich.plant <- ggplot(bean.map, aes(x=Plant, y=Richness, fill=Plant))+
                     geom_boxplot() +
                     #scale_fill_manual(labels = c("A1","A2", "A3","B1","B2","B3","B4","B5","B6","C5","C6","C7"),values=c("#440154FF", "#482677FF","#3F4788FF","#238A8DFF","#1F968BFF","#20A386FF","#29AF7FF","#3CBC75F","#56C667FF","#B8DE29FF","#DCE318FF","#FDE725FF"))+
                     scale_fill_viridis(discrete = T)+
                     geom_jitter(position = position_jitter(width = 0.1, height = 0, seed=13), alpha=0.5)+
                     theme_bw()+
                     expand_limits(x = 0, y = 0)+
-                    geom_text(data=sum_rich_plant_new, aes(x=plant,y=2+max.rich,label=Letter), vjust=0)+
+                    geom_text(data=sum_rich_plant_new, aes(x=Plant,y=2+max.rich,label=Letter), vjust=0)+
+                    labs(title = "A")+
+                    ylab("Bacterial/archaeal<br>Richness\n")+
                     theme(legend.position="none",
-                          axis.text.x=element_text(size = 14),
+                          axis.text.x=element_blank(),
+                          axis.ticks.x = element_blank(),
+                          axis.title.x = element_blank(),
                           axis.text.y = element_text(size = 14),
                           strip.text.y = element_text(size=18, face = 'bold'),
-                          plot.title = element_text(size = rel(2)),
-                          axis.title=element_text(size=18,face="bold"),
+                          plot.title = element_text(size = 14, face = 'bold'),
+                          #axis.title.y=element_text(size=13,face="bold"),
+                          axis.title.y = element_markdown(size=15,face="bold"),
                           plot.background = element_blank(),
                           panel.grid.major = element_blank(),
                           panel.grid.minor = element_blank())
+                          #plot.margin = unit(c(0, 0, 0, 0), "cm"))
+                          
+                          
 rich.plant
 # save the plot
 ggsave("rich.plant.tiff",
@@ -490,29 +685,33 @@ ggsave("rich.plant.tiff",
        units= "in", dpi = 600)
 
 #plot richness among pods
+
 #install.packages("viridis")  # Install
 library("viridis")           # Load
-rich.p <- ggplot(bean.map, aes(x=pod, y=Richness, fill = pod))+
+rich.p <- ggplot(bean.map, aes(x=Pod, y=Richness, fill = Pod))+
                     geom_boxplot() +
                     #scale_fill_manual(labels = c("A1","A2", "A3", "B1", "B2", "B3", "B4", "B5", "B6", "C1", "C2", "C3"),values=c("#ffc6c4","#cc607d","#672044","#fef6b5", "#ffd795", "#ffb77f", "#fd9576", "#f37378", "#e15383", "#A9DC67", "#6EC574", "#39AB7E"))+
                     scale_fill_viridis(discrete = T)+
                     geom_jitter(height = 0, width = 0.1, alpha = 0.5)+
                     theme_bw()+
                     expand_limits(x = 0, y = 0)+
-                    #labs(title = "A. Bacteria/archaea")+
+                    labs(title = "B")+
                     #geom_text(data=new.rich_pod.summarized,aes(x=pod,y=0.5+max.rich,label=new.rich_pod.summarized$groups),vjust=0)+
                     theme(legend.position="none",
-                          axis.text.x=element_text(size = 14),
-                          axis.text.y = element_text(size = 14),
-                          strip.text.y = element_text(size=18, face = 'bold'),
-                          plot.title = element_text(size = rel(2)),
-                          axis.title=element_text(size=18,face="bold"),
+                          axis.text.x=element_blank(),
+                          axis.ticks.x = element_blank(),
+                          axis.text.y=element_blank(),
+                          axis.ticks.y = element_blank(),
+                          plot.title = element_text(size = 14, face = 'bold'),
+                          axis.title=element_blank(),
                           plot.background = element_blank(),
                           panel.grid.major = element_blank(),
                           panel.grid.minor = element_blank())
+                          #plot.margin = unit(c(0, 0, 0, 0), "cm"))
+                          
 rich.p
-rich.pod <- rich.p +
-  facet_grid(. ~ plant, scales="free_x")+
+rich.pod <- rich.p + 
+  facet_grid(. ~ Plant, scales="free_x")+
   theme(strip.background =element_rect(fill="grey"))+
   theme(strip.text = element_text(colour = 'black', size = 14, face = 'bold'))
 rich.pod
@@ -522,30 +721,31 @@ ggsave("rich.pod.tiff",
        width = 6, height =4.5, 
        units= "in", dpi = 600)
 
-
 ######################################################################################################################
 ######################################################################################################################
 
 ### Compare PD Whole Tree among plants ###
 
 # 1. Model fitting with linear mixed effect modelling with lme() function 
-pd.model = lme(PD_whole_tree ~ plant, random = ~ 1|pod, data=bean.map, method="REML")
+pd.model = lme(PD_whole_tree ~ Plant, random = ~ 1|Pod, data=bean.map, method="REML")
 summary(pd.model)
 aov.pd.mod = anova.lme(pd.model, 
           type="marginal", 
           adjustSigma = FALSE)
 aov.pd.mod
 anova(pd.model, type='marginal')
+
 # Fit random intercept and slope model
-pd.model2 <- lme(PD_whole_tree ~ plant, random = ~ plant | pod, data = bean.map, method = "REML")
+pd.model2 <- lme(PD_whole_tree ~ Plant, random = ~ Plant | Pod, data = bean.map, method = "REML")
 AIC(pd.model, pd.model2)
 anova(pd.model, pd.model2)
+
 # check the normality
 shapiro.test(resid(pd.model)) # normal
 # Result: plant has significant effect to the bacterial/archaeal richness.
 
 # Test the significance of the random effect in the mixed effects model
-pd.model.fixed = gls(PD_whole_tree ~ plant, 
+pd.model.fixed = gls(PD_whole_tree ~ Plant, 
                   data=bean.map, 
                  method="REML")
 anova(pd.model, 
@@ -564,56 +764,23 @@ library(sjPlot)
 plot_grid(plot_model(pd.model, type = "diag"))
 
 # homoscedasticity
-leveneTest(residuals(pd.model) ~ bean.map$plant) #Since the p value is greater than 0.05, we can say that the variance of the residuals is equal and therefore the assumption of homoscedasticity is met
-boxplot(residuals(pd.model) ~ bean.map$plant) 
+leveneTest(residuals(pd.model) ~ bean.map$Plant) #Since the p value is greater than 0.05, we can say that the variance of the residuals is equal and therefore the assumption of homoscedasticity is met
+boxplot(residuals(pd.model) ~ bean.map$Plant) 
 
 # posthoc
 set.seed(13)
-bean.map$plant <- as.factor(bean.map$plant)
+bean.map$plant <- as.factor(bean.map$Plant)
 
 pd.posthoc = glht(pd.model,
-               linfct = mcp(plant="Tukey"))
+               linfct = mcp(Plant="Tukey"))
 pd.posthoc
 pd.mcs = summary(pd.posthoc,
               test=adjusted("BH"))
 pd.mcs
 
 
-# 2. Model fitting with linear mixed effect modelling with lmer() function 
-
-bean.map$plant <- as.factor(bean.map$plant)
-bean.map$pod <- as.factor(bean.map$pod)
-
-set.seed(13)
-library(lme4)
-library(lmerTest)
-pd.model.lmer = lmer(PD_whole_tree ~ plant + (1|pod),
-             data=bean.map,
-             REML=TRUE)
-
-pd.model.lmer1 <- lmer(PD_whole_tree ~ plant + (plant|pod), 
-               data=bean.map, 
-               REML = TRUE)
-
-anova(pd.model.lmer, pd.model.lmer1)
-
-
-# Checking assumptions of the model
-plot(pd.model.lmer)
-plot(fitted(pd.model.lmer), residuals(pd.model.lmer, type = "pearson",
-    scaled = TRUE))
-qqnorm(resid(pd.model.lmer))
-qqline(resid(pd.model.lmer))
-qqnorm(pd.model.lmer, ~ranef(., level=2))
-
-# model inference
-summary(pd.model.lmer)
-anova(pd.model.lmer)
-
-rand(pd.model.lmer)
-difflsmeans(pd.model.lmer, 
-            test.effs="plant")
-
+##################################################################################################################################
+##################################################################################################################################
 
 # 2. Power analysis for PD using lmer
 
@@ -638,6 +805,8 @@ powerSim(model.lmer,random(), nsim=100, seed=13)
 # To find out about the dummy variables, you can take a look at the model summary:
 summary(model.lmer)$coef
 
+##################################################################################################################################
+##################################################################################################################################
 
 
 ### RESULT: There are significant differences of bacterial and archaeal phylogenetic diversity among plants but not among pods
@@ -645,48 +814,57 @@ summary(model.lmer)$coef
 # posthoc
 
 set.seed(13)
-bean.map$plant <- as.factor(bean.map$plant)
+bean.map$Plant <- as.factor(bean.map$Plant)
 pd.posthoc = glht(pd.model,
-               linfct = mcp(plant="Tukey"))
+               linfct = mcp(Plant="Tukey"))
 pd.posthoc
 pd.mcs = summary(pd.posthoc,
               test=adjusted("BH"))
 pd.mcs
+
 # get the significant letter
 pd.label <- cld(pd.mcs,
     level=0.05,
     decreasing=TRUE)
 pd.label
+
 # make the dataframe of the group and the significant letter
 pd.label.df <- as.data.frame(pd.label$mcletters$Letters)
 names(pd.label.df)[names(pd.label.df) == "pd.label$mcletters$Letters"] <- "Letter"
-pd.label.df <- rownames_to_column(pd.label.df, "plant")
+pd.label.df <- rownames_to_column(pd.label.df, "Plant")
 pd.label.df
+
 # calculate the max value of the phylogenetic diversity and put them in the same dataframe of the group and the significant letter
 sum_pd_plant <- bean.map %>%
-  group_by(plant) %>% 
+  group_by(Plant) %>% 
   summarize(max.pd=max(PD_whole_tree))
-sum_pd_plant_new=left_join(pd.label.df,sum_pd_plant, by='plant')
+sum_pd_plant_new=left_join(pd.label.df,sum_pd_plant, by='Plant')
 sum_pd_plant_new
 #plot phylogenetic diversity among plant
-pd.plant <- ggplot(bean.map, aes(x=plant, y=PD_whole_tree, fill=plant))+
+pd.plant <- ggplot(bean.map, aes(x=Plant, y=PD_whole_tree, fill=Plant))+
                     geom_boxplot() +
                     #scale_fill_manual(labels = c("A", "B", "C"),values=c("#CC6677", "#DDCC77","#117733"))+
                     scale_fill_viridis(discrete = T)+
                     geom_jitter(position = position_jitter(width = 0.1, height = 0, seed=13), alpha=0.5)+
                     theme_bw()+
                     expand_limits(x = 0, y = 0)+
-                    labs(y="Faith's Phylogenetic Diversity")+
-                    geom_text(data=sum_pd_plant_new, aes(x=plant,y=0.4+max.pd,label=Letter), vjust=0)+
+                    labs(title = "C")+
+                    ylab("Bacterial/archaeal<br>Faith's PD\n")+
+                    geom_text(data=sum_pd_plant_new, aes(x=Plant,y=0.4+max.pd,label=Letter), vjust=0)+
                     theme(legend.position="none",
-                          axis.text.x=element_text(size = 14),
+                          axis.text.x=element_blank(),
+                          axis.ticks.x = element_blank(),
                           axis.text.y = element_text(size = 14),
                           strip.text.y = element_text(size=18, face = 'bold'),
-                          plot.title = element_text(size = rel(2)),
-                          axis.title=element_text(size=18,face="bold"),
+                          plot.title = element_text(size = 14,face = 'bold'),
+                          axis.title.x =element_blank(),
+                          axis.title.y = element_markdown(size=15,face="bold"),
                           plot.background = element_blank(),
                           panel.grid.major = element_blank(),
                           panel.grid.minor = element_blank())
+                          #plot.margin = unit(c(0, 0, 0, 0), "cm"))
+                          
+
 pd.plant
 # save the plot
 ggsave("pd.plant.tiff",
@@ -698,28 +876,33 @@ ggsave("pd.plant.tiff",
 
 #install.packages("viridis")  # Install
 library("viridis")           # Load
-pd.p <- ggplot(bean.map, aes(x=pod, y=PD_whole_tree, fill = pod))+
+pd.p <- ggplot(bean.map, aes(x=Pod, y=PD_whole_tree, fill = Pod))+
                     geom_boxplot() +
                     #scale_fill_manual(labels = c("A1","A2", "A3", "B1", "B2", "B3", "B4", "B5", "B6", "C5", "C6", "C7"),values=c("#ffc6c4","#cc607d","#672044","#fef6b5", "#ffd795", "#ffb77f", "#fd9576", "#f37378", "#e15383", "#A9DC67", "#6EC574", "#39AB7E"))+
                     scale_fill_viridis(discrete = T)+
                     geom_jitter(position = position_jitter(width = 0.1, height = 0, seed=13), alpha=0.5)+
                     theme_bw()+
                     expand_limits(x = 0, y = 0)+
-                    labs(y="Faith's Phylogenetic Diversity")+
+                    labs(title="D")+
                     #geom_text(data=new.rich_pod.summarized,aes(x=pod,y=0.5+max.rich,label=new.rich_pod.summarized$groups),vjust=0)+
                     theme(legend.position="none",
-                          axis.text.x=element_text(size = 14),
-                          axis.text.y = element_text(size = 14),
+                          axis.text.x=element_blank(),
+                          axis.ticks.x = element_blank(),
+                          axis.ticks.y = element_blank(),
+                          axis.text.y = element_blank(),
                           strip.text.y = element_text(size=18, face = 'bold'),
-                          plot.title = element_text(size = rel(2)),
-                          axis.title=element_text(size=18,face="bold"),
+                          plot.title = element_text(size = 14, face = 'bold'),
+                          axis.title.x=element_blank(),
+                          axis.title.y = element_blank(),
                           plot.background = element_blank(),
                           panel.grid.major = element_blank(),
                           panel.grid.minor = element_blank())
+                          #plot.margin = unit(c(0, 0, 0, 0), "cm"))
 pd.pod <- pd.p +
-  facet_grid(. ~ plant, scales="free_x")+
-  theme(strip.background =element_rect(fill="grey"))+
-  theme(strip.text = element_text(colour = 'black', size = 14, face = 'bold'))
+  facet_grid(. ~ Plant, scales="free_x")+
+  theme(strip.text = element_blank())
+  #theme(strip.background =element_rect(fill="grey"))+
+  #theme(strip.text = element_text(colour = 'black', size = 14, face = 'bold'))
 pd.pod
 
 ggsave("pd.pod.tiff",
@@ -731,421 +914,31 @@ ggsave("pd.pod.tiff",
 
 ### RESULT: There are no significant differences of bacterial and archaeal richness among pods after post hoc Dunn test
 
-###########################################################################################################################
-### Compare bacterial and archaeal richness among different pods of the same plants using one-way ANOVA######
-
-plantA <- bean.map[c(1:12),]
-plantA$plant <- factor(plantA$plant)
-plantA$pod <- factor(plantA$pod)
-plantA$sample.id <- factor(plantA$sample.id)
-plantB <- bean.map[c(13:36),]
-plantB$plant <- factor(plantB$plant)
-plantB$pod <- factor(plantB$pod)
-plantB$sample.id <- factor(plantB$sample.id)
-plantC <- bean.map[c(37:47),]
-plantC$plant <- factor(plantC$plant)
-plantC$pod <- factor(plantC$pod)
-plantC$sample.id <- factor(plantC$sample.id)
-
-#. 1. Plant A
-rich.podA <- aov(plantA$Richness ~ pod, data = plantA)
-summary(rich.podA) #3.156 0.0915
-# testing assumptions
-# Generate residual and predicted values
-rich.podA.resids <- residuals(rich.podA)
-rich.podA.preds <- predict(rich.podA)
-# Look at a plot of residual vs. predicted values
-plot(rich.podA.resids ~ rich.podA.preds, xlab = "Predicted Values", ylab = "Residuals", asp=.5)
-# plot a line on X-axis for comparison. a=intercept,b=slope,h=yvalue,v=xvalue.
-abline(a=0,h=0,b=0)
-# Perform a Shapiro-Wilk test for normality of residuals
-shapiro.test(rich.podA.resids) # p-value = 0.33, data errors are not normally distributed 
-# Perform Levene's Test for homogenity of variances
-leveneTest(Richness ~ pod, data=plantA, na.action=na.exclude) # p-val=0.26 variances among group are homogenous
-plot(density(rich.podA.resids)) 
-qqnorm(rich.podA.resids)
-qqline(rich.podA.resids)
-hist(rich.podA.resids)
-skew_xts <- skewness(rich.podA.resids)
-kurtosis(rich.podA.resids,method = 'sample')
-boxplot(Richness ~ pod,
-        ylab="Richness", xlab="pod", data = plantA) 
-#### RESULT: There are no differences of bacterial and archaeal richness among pods
-(rich.podA.plot <- ggplot(plantA, aes(x=pod, y=Richness))+
-                    geom_boxplot() +
-                    geom_jitter(height = 0, width = 0.1, alpha = 0.5)+
-                    theme_bw()+
-                    expand_limits(x = 0, y = 0)+
-                    labs(title = "A. Plant A")+
-                    # geom_text(data=new.richness.summarized,aes(x=Site,y=32+max.Richness,label=new.richness.summarized$groups),vjust=0)+
-                    theme(axis.text.x=element_text(size = 14),
-                          axis.text.y = element_text(size = 14),
-                          strip.text.y = element_text(size=18, face = 'bold'),
-                          plot.title = element_text(size = rel(2)),
-                          axis.title=element_text(size=18,face="bold"),
-                          plot.background = element_blank(),
-                          panel.grid.major = element_blank(),
-                          panel.grid.minor = element_blank()))
-ggsave("rich.podA.norm.tiff",
-       rich.podA.plot, device = "tiff",
-       width = 5, height =4, 
-       units= "in", dpi = 600)
-
-#. 2. Plant B
-rich.podB <- aov(plantB$Richness ~ pod, data = plantB)
-summary(rich.podB) #3.202 0.0306 *
-# testing assumptions
-# Generate residual and predicted values
-rich.podB.resids <- residuals(rich.podB)
-rich.podB.preds <- predict(rich.podB)
-# Look at a plot of residual vs. predicted values
-plot(rich.podB.resids ~ rich.podB.preds, xlab = "Predicted Values", ylab = "Residuals", asp=.5)
-# plot a line on X-axis for comparison. a=intercept,b=slope,h=yvalue,v=xvalue.
-abline(a=0,h=0,b=0)
-# Perform a Shapiro-Wilk test for normality of residuals
-shapiro.test(rich.podB.resids) # GOOD!! p-value = 0.72, data errors are normally distributed 
-# Perform Levene's Test for homogenity of variances
-leveneTest(Richness ~ pod, data=plantB, na.action=na.exclude) # p-val=0.96 variances among group are homogenous
-plot(density(rich.podB.resids)) 
-qqnorm(rich.podB.resids)
-qqline(rich.podB.resids)
-hist(rich.podB.resids)
-skew_xts <- skewness(rich.podB.resids)
-kurtosis(rich.podB.resids,method = 'sample')
-boxplot(Richness ~ pod,
-        ylab="Richness", xlab="pod", data = plantB) 
-### RESULT: There are differences of bacterial and archaeal richness among pods
-# Do Tukey's HSD Post Hoc Test
-rich_podB.hsd <- HSD.test(rich.podB, "pod", alpha = 0.05,group = T ,main = NULL,console=TRUE)
-rich_podB.hsd <- HSD.test(rich.podB, "pod",alpha = 0.05, group = FALSE, main = NULL,console=TRUE)
-# Do Plot
-# add significance letters from HSD.test into box plot   
-rich_podB.hsd.summarized <- plantB %>% group_by(pod) %>% summarize(max.rich=max(Richness))
-rich_podB.letter <- rich_podB.hsd$groups
-rich_podB.letter$pod <- rownames(rich_podB.letter)
-rich_podB.hsd.summ <- left_join(rich_podB.letter,rich_podB.hsd.summarized, by='pod')  
-(rich.podB.plot <- ggplot(plantB, aes(x=pod, y=Richness))+
-                    geom_boxplot() +
-                    geom_jitter(height = 0, width = 0.1, alpha = 0.5)+
-                    theme_bw()+
-                    expand_limits(x = 0, y = 0)+
-                    labs(title = "B. Plant B")+
-                    geom_text(data=rich_podB.hsd.summ,aes(x=pod,y=2+max.rich,label=rich_podB.hsd.summ$groups),vjust=0)+
-                    theme(axis.text.x=element_text(size = 14),
-                          axis.text.y = element_text(size = 14),
-                          strip.text.y = element_text(size=18, face = 'bold'),
-                          plot.title = element_text(size = rel(2)),
-                          axis.title=element_text(size=18,face="bold"),
-                          plot.background = element_blank(),
-                          panel.grid.major = element_blank(),
-                          panel.grid.minor = element_blank()))
-
-ggsave("rich.podB.norm.tiff",
-       rich.podB.plot, device = "tiff",
-       width = 5, height =4, 
-       units= "in", dpi = 600)
-
-#. 3. Plant C
-rich.podC <- aov(plantC$Richness ~ pod, data = plantC)
-summary(rich.podC) #0.327   0.73
-# testing assumptions
-# Generate residual and predicted values
-rich.podC.resids <- residuals(rich.podC)
-rich.podC.preds <- predict(rich.podC)
-# Look at a plot of residual vs. predicted values
-plot(rich.podC.resids ~ rich.podC.preds, xlab = "Predicted Values", ylab = "Residuals", asp=.5)
-# plot a line on X-axis for comparison. a=intercept,b=slope,h=yvalue,v=xvalue.
-abline(a=0,h=0,b=0)
-# Perform a Shapiro-Wilk test for normality of residuals
-shapiro.test(rich.podC.resids) # GOOD!! p-value = 0.13, data errors are normally distributed 
-# Perform Levene's Test for homogenity of variances
-leveneTest(Richness ~ pod, data=plantC) # p-val=0.66 variances among group are homogenous
-plot(density(rich.podC.resids)) 
-plot(rich.podC,1)
-qqnorm(rich.podC.resids)
-qqline(rich.podC.resids)
-hist(rich.podC.resids)
-skew_xts <- skewness(rich.podC.resids)
-kurtosis(rich.podC.resids,method = 'sample')
-boxplot(Richness ~ pod,
-        ylab="Richness", xlab="pod", data = plantC) 
-### RESULT: There are no differences of bacterial and archaeal richness among pods
-(rich.podC.plot <- ggplot(plantC, aes(x=pod, y=Richness))+
-                    geom_boxplot() +
-                    geom_jitter(height = 0, width = 0.1, alpha = 0.5)+
-                    theme_bw()+
-                     expand_limits(x = 0, y = 0)+
-                    labs(title = "C. Plant C")+
-                    # geom_text(data=new.richness.summarized,aes(x=Site,y=32+max.Richness,label=new.richness.summarized$groups),vjust=0)+
-                    theme(axis.text.x=element_text(size = 14),
-                          axis.text.y = element_text(size = 14),
-                          strip.text.y = element_text(size=18, face = 'bold'),
-                          plot.title = element_text(size = rel(2)),
-                          axis.title=element_text(size=18,face="bold"),
-                          plot.background = element_blank(),
-                          panel.grid.major = element_blank(),
-                          panel.grid.minor = element_blank()))
-ggsave("rich.podC.norm.tiff",
-       rich.podC.plot, device = "tiff",
-       width = 5, height =4, 
-       units= "in", dpi = 600)
-
-#######################################################################################################################################################3
-
-### Rarefaction curves ######
-# using GlobalPatterns
-
-library(phyloseq)
-
-# 1. rarefaction curve for decontaminated non-normalized OTU table
-
-decon.otu # decontaminated non-normalized OTU table
-# make phyloseq otu table and taxonomy
-otu1.phyl = otu_table(decon.otu, taxa_are_rows = TRUE)
-tax.phyl = tax_table(as.matrix(tax))
-
-# make phyloseq map
-rownames(bean.map) <- bean.map$sample.id
-map.phyl <- sample_data(bean.map)
-
-# make phyloseq object
-
-phyl.obj1 <- merge_phyloseq(otu1.phyl,tax.phyl,map.phyl)
-phyl.obj1
-
-#setEPS()
-#postscript("bacterial rarecurve.eps", height = 5, width = 5)
-#rarecurve(t(otu_table(phyl.obj1)), 
-                           #step=1000, cex=0.5,
-                           #xlab = "Reads", 
-                           #ylab = "Bacterial/archaeal OTUs", col = curve_colors)
-#dev.off()
-
-map_16S <- bean.map[bean.map$sample.id%in%colnames(decon.otu),]
-curve_colors <- rep("darkgreen", ncol(decon.otu))
-curve_colors[map_16S$plant=="A"] <- "#440154FF"
-curve_colors[map_16S$plant=="B"] <- "#1F968BFF"
-curve_colors[map_16S$plant=="C"] <- "#FDE725FF"
-
-lty <- c("solid", "solid", "solid")
-
-setEPS()
-postscript("bacterial rarecurve decontaminated non-normalized.eps", height = 5, width = 5)
-rarecurve(t(decon.otu), step=1, label=F, col = curve_colors, lty=lty, lwd=2, xlab = "Reads", 
-                           ylab = "Bacterial/archaeal OTUs")
-# Add a legend
-legend(2500, 20, legend=c("A", "B", "C"),
-       col=c("#440154FF", "#1F968BFF","#FDE725FF"), lty = lty, lwd=2, title = "Plant")
-dev.off()
-graphics.off()
-
-# 2. rarefaction curve for undecontaminated non-normalized OTU table
-
-# read the otu table
-otu.bac1 # undecontaminated non-normalized OTU table
-
-setEPS()
-postscript("bacterial rarecurve undecontaminated non-normalized.eps", height = 5, width = 5)
-rarecurve(t(otu.bac1), step=1, label=F, col = curve_colors, lty=lty, lwd=2, xlab = "Reads", 
-                           ylab = "Bacterial/archaeal OTUs")
-# Add a legend
-legend(2500, 20, legend=c("A", "B", "C"),
-       col=c("#440154FF", "#1F968BFF","#FDE725FF"), lty = lty, lwd=2, title = "Plant")
-dev.off()
 
 #######################################################################################################################################################
+#######################################################################################################################################################
 
-# BACTERIA COMPOSITION
+##### Fig. 3 Make Bacterial and Fungal Richness and PD Plots Among Plants and Pods in the Same Panel######
 
-#BiocManager::install("phyloseq")
-library(phyloseq)
-
-# load normalized otu table
-otu.norm
-head(otu.norm)
-#otu.norm <- column_to_rownames(otu.norm, var = "OTU.ID")
-
-# bacterial taxonomy
-head(tax)
-#tax <- column_to_rownames(tax, var = "OTU.ID")
-rownames(tax) <- rownames(otu.norm)
-# make phyloseq otu table and taxonomy
-otu.phyl = otu_table(otu.norm, taxa_are_rows = TRUE)
-tax.phyl = tax_table(as.matrix(tax))
-
-# make phyloseq map
-rownames(bean.map) <- bean.map$sample.id
-map.phyl <- sample_data(bean.map)
-
-# make phyloseq object
-
-phyl.obj <- merge_phyloseq(otu.phyl,tax.phyl,map.phyl)
-phyl.obj
-
-# merge taxa by phylum
-
-# 1. phylum - Bacteria
-bac.phylum <- tax_glom(phyl.obj, taxrank = "Phylum", NArm = F)
-bac.phylum.ra <- transform_sample_counts(bac.phylum, function(x) x/sum(x))
-bac.phylum.ra
-
-df.phylum <- psmelt(bac.phylum.ra) %>%
-  group_by(plant, Phylum) %>%
-  summarize(Mean = mean(Abundance)) %>%
-  arrange(-Mean)
-
-# OR
-
-
-###create dataframe from phyloseq object
-library(data.table)
-df.bac.phyl <- data.table(psmelt(bac.phylum.ra))
-dim(df.bac.phyl)
-###convert phylum to character vector from a factor
-df.bac.phyl$Phylum <- as.character(df.bac.phyl$Phylum)
-
-# calculating mean relative abundance per plant
-mean.phylrelabund.perplant= df.bac.phyl %>%
-  group_by(plant, Phylum) %>%
-  summarise(ra=mean(Abundance))
-
-
-
-# barplot of bacterial/archaeal composition across pods at Phylum level
-library(rcartocolor)
-display_carto_all(colorblind_friendly = TRUE)
-my_colors = carto_pal(12, "Safe")
-my_colors
-
-# New facet label names for plant variable
-plant.labs <- c("Plant A", "Plant B", "Plant C")
-names(plant.labs) <- c("A", "B", "C")
-
-# Create the plot
-
-pod.phylum <- ggplot(data=df.phylum, aes(x=pod, y=Mean, fill=Phylum))
-plot.pod.phylum <- pod.phylum + 
-                     geom_bar(aes(), stat="identity", position="fill") + 
-                     #scale_fill_manual(values=c('#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c','#f58231', '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1', '#000075', '#808080', 'lightslateblue', '#000000', 'tomato','hotpink2'))+
-                     scale_fill_manual(values= my_colors)+
-                     theme(legend.position="bottom") + 
-                     guides(fill=guide_legend(nrow=5))+
-                     labs(y= "Mean Relative Abundance", x="Pod")+
-                     theme(plot.title = element_text(size = rel(1.5), face="bold"),
-                           #axis.line.y = element_line(size=0.5, colour = "black"),
-                           panel.grid.major = element_blank(),
-                           panel.grid.minor = element_blank(),
-                           axis.text=element_text(size=12, face = "bold"),
-                           axis.line.x = element_blank(),
-                           #axis.text.x = element_blank(),
-                           #axis.ticks.x = element_blank(),
-                           #axis.title.x = element_blank(),
-                           axis.title =element_text(size=15,face="bold"),
-                           legend.text=element_text(size = 10),
-                           legend.title = element_text(size=11, face = "bold"),
-                           panel.grid = element_blank(), 
-                           panel.background = element_blank(),
-                           strip.text.x = element_text(size = 12, face = "bold"),
-                           panel.border = element_rect(colour = "black", fill = NA,size = 0.2))+
-                           #facet_grid(~plant, switch = "x", scales = "free_x")+
-                           guides(fill=guide_legend(nrow=2,byrow=TRUE))
-                           
-plot.pod.phylum
-
-plot.pod.phylum1 <- plot.pod.phylum +
-  facet_grid(. ~ plant, labeller = labeller(plant=plant.labs), scales="free_x")+
-  theme(strip.background =element_rect(fill="grey"))+
-  theme(strip.text = element_text(colour = 'black', size = 14, face = 'bold'))
-plot.pod.phylum1
-
-#ggsave("plot.pod.phylum.eps",
-      #plot.pod.phylum1, device = "eps",
-      #width = 9.5, height =5, 
-      #units= "in", dpi = 600)
-
-# merge taxa by class
-
-# 1. class - Bacteria
-bac.cl <- tax_glom(phyl.obj, taxrank = "Class", NArm = F)
-bac.cl.ra <- transform_sample_counts(bac.cl, function(x) x/sum(x))
-bac.cl.ra
-
-df.cl <- psmelt(bac.cl.ra) %>%
-  group_by(sample.id, plant, pod, Class) %>%
-  summarize(Mean = mean(Abundance)) %>%
-  arrange(-Mean)
-
-df.cl$Class <- as.character(df.cl$Class)
-df.cl$Class[df.cl$Mean < 0.1] <- "Other"
-
-# barplot of bacterial/archaeal composition across pods at Phylum level
-library(rcartocolor)
-display_carto_all(colorblind_friendly = TRUE)
-my_colors = carto_pal(12, "Safe")
-my_colors
-
-# New facet label names for plant variable
-plant.labs <- c("Plant A", "Plant B", "Plant C")
-names(plant.labs) <- c("A", "B", "C")
-
-# Create the plot
-
-pod.cl <- ggplot(data=df.cl, aes(x=pod, y=Mean, fill=Class))
-plot.pod.cl <- pod.cl + 
-                     geom_bar(aes(), stat="identity", position="fill") + 
-                     #scale_fill_manual(values=c('#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c','#f58231', '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1', '#000075', '#808080', 'lightslateblue', '#000000', 'tomato','hotpink2'))+
-                     scale_fill_manual(values=c("#44AA99", "#332288", "#117733","#CC6677","#DDCC77", "#88CCEE","#661100","#AA4499" ,"#888888"))+
-                     theme(legend.position="bottom") + 
-                     guides(fill=guide_legend(nrow=5))+
-                     labs(y= "Mean Relative Abundance", x="Pod")+
-                     theme(plot.title = element_text(size = rel(1.5), face="bold"),
-                           #axis.line.y = element_line(size=0.5, colour = "black"),
-                           panel.grid.major = element_blank(),
-                           panel.grid.minor = element_blank(),
-                           axis.text=element_text(size=12, face = "bold"),
-                           axis.line.x = element_blank(),
-                           #axis.text.x = element_blank(),
-                           #axis.ticks.x = element_blank(),
-                           #axis.title.x = element_blank(),
-                           axis.title =element_text(size=15,face="bold"),
-                           legend.text=element_text(size = 10),
-                           legend.title = element_text(size=11, face = "bold"),
-                           panel.grid = element_blank(), 
-                           panel.background = element_blank(),
-                           strip.text.x = element_text(size = 12, face = "bold"),
-                           panel.border = element_rect(colour = "black", fill = NA,size = 0.2))+
-                           #facet_grid(~plant, switch = "x", scales = "free_x")+
-                           guides(fill=guide_legend(nrow=2,byrow=TRUE))
-                           
-plot.pod.cl
-
-plot.pod.cl1<- plot.pod.cl +
-  facet_grid(. ~ plant, labeller = labeller(plant=plant.labs), scales="free_x")+
-  theme(strip.background =element_rect(fill="grey"))+
-  theme(strip.text = element_text(colour = 'black', size = 14, face = 'bold'))
-plot.pod.cl1
-
-ggsave("plot.pod.class.eps",
-      plot.pod.cl1, device = "eps",
-       width = 8.6, height =5, 
+rich.plant
+rich.pod
+pd.plant
+pd.pod
+fg.rich.plant
+fg.rich.pod1
+setwd('/Users/arifinabintarti/Documents/Bean_seed_variability_Bintarti_2020/Figures')
+#RichPD <- ggarrange(rich.plant,rich.pod,pd.plant,pd.pod, legend=NULL, nrow=2,ncol = 2, align = "hv")
+#library(cowplot)
+library(patchwork)
+RichPD <- (rich.plant | rich.pod ) / (pd.plant | pd.pod) / (fg.rich.plant | fg.rich.pod1)
+#RichPD <- plot_grid(rich.plant,rich.pod,pd.plant,pd.pod, align = "hv", axis = "btrl")
+ggsave("Fig.3.tiff",
+       RichPD, device = "tiff",
+       width = 11.5, height = 10, 
        units= "in", dpi = 600)
-# subset genus Rhizobia from the phyloseq object
-#subset_taxa(phyl.obj, Phylum=="Bacteroidetes")
-bac.genus <- tax_glom(phyl.obj, taxrank = "Genus", NArm = F)
-bac.genus.ra <- transform_sample_counts(bac.genus, function(x) x/sum(x))
-bac.genus.ra
-###create dataframe from phyloseq object
-library(data.table)
-df.bac.genus <- data.table(psmelt(bac.genus.ra))
-dim(df.bac.genus)
-# calculating mean relative abundance per genus
-mean.relabund.genus= df.bac.genus %>%
-  group_by(Genus) %>%
-  summarise(ra=mean(Abundance)) 
 
-
-
-##############################################################################################################################
+#######################################################################################################################################################
+#######################################################################################################################################################
 
 # 1. CALCULATE BETA DIVERSITY (PCoA PLOT) FOR BACTERIA
 
@@ -1198,7 +991,7 @@ pod.pcoa <- ggplot(data = map, aes(x=ax1.scores, y=ax2.scores))+
             legend.spacing.x = unit(0.05, 'cm'))
 
 set.seed(13)
-pod.pcoa2 <- pod.pcoa + geom_text_repel(aes(label = pod),size = 3) 
+pod.pcoa2 <- pod.pcoa + geom_text_repel(aes(label = Pod),size = 3) 
 pod.pcoa2
 ggsave("pcoa.jac2.tiff",
        pod.pcoa2, device = "tiff",
@@ -1206,17 +999,20 @@ ggsave("pcoa.jac2.tiff",
        units= "in", dpi = 600)
 
 set.seed(13)
-#adonis <- adonis(otu_dist ~ map$plant/map$pod, 
-                 #permutation=999,
-                 #method="jaccard", 
-                 #strata = NULL)
-#adonis
+
+######## Calculated the statistical analysis of beta diversity using nested permanova #########
+set.seed(13)
+adonis <- adonis(otu_dist ~ map$Plant/map$Pod, 
+                 permutation=999,
+                 method="jaccard", 
+                 strata = NULL)
+adonis
 #install.packages("BiodiversityR")
 library(BiodiversityR)
 set.seed(13)
-map$plant <- as.factor(map$plant)
-map$pod <- as.factor(map$pod)
-nested.npmanova(otu_dist ~ plant + pod, 
+map$Plant <- as.factor(map$Plant)
+map$Pod <- as.factor(map$Pod)
+nested.npmanova(otu_dist ~ Plant + Pod, 
                 data = map, 
                 method = "jac", 
                 permutations = 999)
@@ -1232,9 +1028,9 @@ mod$distances
 dispersion <- as.data.frame(mod$distance)
 names(dispersion)[names(dispersion) == "mod$distance"] <- "Dispersion"
 #add dispersion index
-dispersion <- rownames_to_column(dispersion, "sample.id")
+dispersion <- rownames_to_column(dispersion, "Sample.id")
 #join dispersion index to the map 
-bean.map <- merge(bean.map, dispersion, by="sample.id", all = T)
+bean.map <- merge(bean.map, dispersion, by="Sample.id", all = T)
 
 
 boxplot(mod)
@@ -1286,96 +1082,35 @@ ggsave("dis.plant.tiff",
        width = 5, height =4.5, 
        units= "in", dpi = 600)
 
-################################################################################################################################################################
-## Rank-abundance Curves
 
-#install.packages("goeveg")
-library(goeveg)
-racurve(t(otu.norm), main = "Rank-abundance diagram")
-racurves(t(decon.otu), main = "Rank-abundance diagram", bw=F)
+groups.pod <- factor(c(rep("A1",4),rep("A2",4), rep("A3",4), rep("B1",4), rep("B2",4), rep("B3",4), rep("B4",4),rep("B5",4), rep("B6",4), rep("C5",3), rep("C6",4), rep("C7",4)))
+otu_dist <- vegdist(t(bacnorm_PA), binary = TRUE, method = "jaccard") #Sorensen
+mod.pod <- betadisper(otu_dist, groups.pod)
+mod.pod
+mod.pod$distances
+dispersion.pod <- as.data.frame(mod.pod$distance)
+names(dispersion.pod)[names(dispersion.pod) == "mod.pod$distance"] <- "Dispersion"
+#add dispersion index
+dispersion.pod <- rownames_to_column(dispersion.pod, "Sample.id")
+#join dispersion index to the map 
+bean.map <- merge(bean.map, dispersion.pod, by="Sample.id", all = T)
 
-# OR
-#install.packages("BiodiversityR")
-library(BiodiversityR)
-RankAbun.1 <- rankabundance(t(decon.otu))
-RankAbun.1
-rankabunplot(RankAbun.1,scale='abundance', addit=FALSE, specnames=c(1,2,3))
-bean.map$plant <- as.factor(bean.map$plant)
-bean.map$pod <- as.factor(bean.map$pod)
-rankabuncomp(t(decon.otu), y=bean.map, factor='plant', type = "l",
-    scale='proportion', legend=T, rainbow = T)
+boxplot(mod.pod)
+# Null hypothesis of no difference in dispersion between groups
+anova(mod.pod) # there is significant differences in dispersion between groups
+# the variances among groups are not homogenous,
+hsd.pod=TukeyHSD(mod.pod) #which groups differ in relation to their variances
+hsd.pod
+plot(hsd.pod)
 
-# OR
-#install.packages("remotes")
-remotes::install_github("MadsAlbertsen/ampvis2",force = T)
-library(ampvis2)
 
-# make ampvis data
-# read the otu table and tax table
-decon.otu.tax <- cbind(decon.otu, tax)
-dim(decon.otu.tax)
-# change "Domain" to "Kingdom"
-names(decon.otu.tax)[names(decon.otu.tax) == "Domain"] <- "Kingdom"
-# load the amp data
-amp.data <- amp_load(decon.otu.tax,bean.map,
-  fasta = NULL,
-  tree = NULL,
-  pruneSingletons = FALSE)
-# generate rank abundance curve
-amp_rankabundance(amp.data, group_by="plant", showSD = TRUE, log10_x = F)
 
-# using phyloseq
+#######################################################################################################################################################
 
-# 1. make phyloseq object of decontaminated non-normalized otu table
+# BACTERIA COMPOSITION
 
+#BiocManager::install("phyloseq")
 library(phyloseq)
-decon.otu # decontaminated non-normalized OTU table
-# make phyloseq otu table and taxonomy
-otu1.phyl = otu_table(decon.otu, taxa_are_rows = TRUE)
-tax.phyl = tax_table(as.matrix(tax))
-
-# make phyloseq map
-rownames(bean.map) <- bean.map$sample.id
-map.phyl <- sample_data(bean.map)
-
-# make phyloseq object
-
-phyl.obj1 <- merge_phyloseq(otu1.phyl,tax.phyl,map.phyl)
-phyl.obj1
-phyl.obj1 <- merge_phyloseq(otu1.phyl,tax.phyl,map.phyl)
-phyl.obj1
-
-# this converts taxa counts in each sample to a percentage
-phyloTemp <-  transform_sample_counts(phyl.obj1, function(x) x/sum(x))
-clusterData <-  psmelt(phyloTemp)
-
-# calculating mean relative abundance per plant
-relabund.perplant= clusterData %>%
-  group_by(plant, OTU) %>%
-  summarise(ra=mean(Abundance)) %>%
-  arrange(desc(ra),.by_group = TRUE) %>%
-  mutate(rank = row_number(-ra))
-
-relabund.perplant$plant <- as.factor(relabund.perplant$plant)
-
-# plotting
-rank.abund <- ggplot(relabund.perplant,aes(x=rank,y=ra, colour=plant)) +
-  geom_line(aes(group = plant), size=1.2) +
-  scale_colour_viridis(discrete = T)+
-  labs(x="Rank", y="Relative Abundance")+
-  theme_bw()+
-  theme(axis.text.x=element_text(size = 14),
-        axis.text.y = element_text(size = 14),
-        strip.text.y = element_text(size=18, face = 'bold'),
-        plot.title = element_text(size = rel(2)),
-        axis.title = element_text(size=15,face="bold"),
-        legend.title = element_text(size=15),
-        plot.background = element_blank(),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank())
-
-
-# 2. make phyloseq object of decontaminated normalized otu table
 
 # load normalized otu table
 otu.norm
@@ -1391,114 +1126,208 @@ otu.phyl = otu_table(otu.norm, taxa_are_rows = TRUE)
 tax.phyl = tax_table(as.matrix(tax))
 
 # make phyloseq map
-rownames(bean.map) <- bean.map$sample.id
+rownames(bean.map) <- bean.map$Sample.id
 map.phyl <- sample_data(bean.map)
 
-# make phyloseq object  
+# make phyloseq object
 
 phyl.obj <- merge_phyloseq(otu.phyl,tax.phyl,map.phyl)
 phyl.obj
 
-# this converts taxa counts in each sample to a percentage
-phyloTemp2 <-  transform_sample_counts(phyl.obj, function(x) x/sum(x))
-clusterData2 <-  psmelt(phyloTemp2)
+# merge taxa by phylum
+
+# 1. phylum - Bacteria
+bac.phylum <- tax_glom(phyl.obj, taxrank = "Phylum", NArm = F)
+bac.phylum.ra <- transform_sample_counts(bac.phylum, function(x) x/sum(x))
+bac.phylum.ra
+
+df.phylum <- psmelt(bac.phylum.ra) %>%
+  group_by(Plant, Pod, Phylum) %>%
+  summarize(Mean = mean(Abundance)) %>%
+  arrange(-Mean)
+
+# OR
+
+
+###create dataframe from phyloseq object
+library(data.table)
+df.bac.phyl <- data.table(psmelt(bac.phylum.ra))
+dim(df.bac.phyl)
+###convert phylum to character vector from a factor
+df.bac.phyl$Phylum <- as.character(df.bac.phyl$Phylum)
 
 # calculating mean relative abundance per plant
-relabund.perplant2= clusterData2 %>%
-  group_by(plant, OTU) %>%
-  summarise(ra=mean(Abundance)) %>%
-  arrange(desc(ra),.by_group = TRUE) %>%
-  mutate(rank = row_number(-ra))
+mean.phylrelabund.perplant= df.bac.phyl %>%
+  group_by(Plant, Pod, Phylum) %>%
+  summarise(ra=mean(Abundance))%>%
+  arrange(-ra)
 
-relabund.perplant2$plant <- as.factor(relabund.perplant2$plant)
 
-# plotting
-rank.abund2 <- ggplot(relabund.perplant2,aes(x=rank,y=ra, colour=plant)) +
-  geom_line(aes(group = plant), size=1.2) +
-  scale_colour_viridis(discrete = T)+
-  labs(x="Rank", y="Relative Abundance")+
-  theme_bw()+
-  theme(axis.text.x=element_text(size = 14),
-        axis.text.y = element_text(size = 14),
-        strip.text.y = element_text(size=18, face = 'bold'),
-        plot.title = element_text(size = rel(2)),
-        axis.title = element_text(size=15,face="bold"),
-        legend.title = element_text(size=15),
-        plot.background = element_blank(),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank())
-rank.abund2
-ggsave("rank.abund.normalized.eps",
-       rank.abund2, device = "eps",
-       width = 5, height =4.5, 
+
+# barplot of bacterial/archaeal composition across pods at Phylum level
+library(rcartocolor)
+display_carto_all(colorblind_friendly = TRUE)
+my_colors = carto_pal(12, "Safe")
+my_colors
+
+# New facet label names for plant variable
+plant.labs <- c("Plant A", "Plant B", "Plant C")
+names(plant.labs) <- c("A", "B", "C")
+
+# Create the plot
+
+pod.phylum <- ggplot(data=df.phylum, aes(x=Pod, y=Mean, fill=Phylum))
+plot.pod.phylum <- pod.phylum + 
+                     geom_bar(aes(), stat="identity", position="fill") + 
+                     #scale_fill_manual(values=c('#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c','#f58231', '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1', '#000075', '#808080', 'lightslateblue', '#000000', 'tomato','hotpink2'))+
+                     scale_fill_manual(values= my_colors)+
+                     theme(legend.position="bottom") + 
+                     guides(fill=guide_legend(nrow=5))+
+                     labs(y= "Mean Relative Abundance", x="Pod")+
+                     theme(plot.title = element_text(size = rel(1.5), face="bold"),
+                           #axis.line.y = element_line(size=0.5, colour = "black"),
+                           panel.grid.major = element_blank(),
+                           panel.grid.minor = element_blank(),
+                           axis.text=element_text(size=12, face = "bold"),
+                           axis.line.x = element_blank(),
+                           #axis.text.x = element_blank(),
+                           #axis.ticks.x = element_blank(),
+                           #axis.title.x = element_blank(),
+                           axis.title =element_text(size=15,face="bold"),
+                           legend.text=element_text(size = 10),
+                           legend.title = element_text(size=11, face = "bold"),
+                           panel.grid = element_blank(), 
+                           panel.background = element_blank(),
+                           strip.text.x = element_text(size = 12, face = "bold"),
+                           panel.border = element_rect(colour = "black", fill = NA,size = 0.2))+
+                           #facet_grid(~plant, switch = "x", scales = "free_x")+
+                           guides(fill=guide_legend(nrow=2,byrow=TRUE))
+                           
+plot.pod.phylum
+
+plot.pod.phylum1 <- plot.pod.phylum +
+  facet_grid(. ~ Plant, labeller = labeller(Plant=plant.labs), scales="free_x")+
+  theme(strip.background =element_rect(fill="grey"))+
+  theme(strip.text = element_text(colour = 'black', size = 14, face = 'bold'))
+plot.pod.phylum1
+
+#ggsave("plot.pod.phylum.eps",
+      #plot.pod.phylum1, device = "eps",
+      #width = 9.5, height =5, 
+      #units= "in", dpi = 600)
+
+# merge taxa by class
+
+# 1. class - Bacteria
+bac.cl <- tax_glom(phyl.obj, taxrank = "Class", NArm = F)
+bac.cl.ra <- transform_sample_counts(bac.cl, function(x) x/sum(x))
+bac.cl.ra
+
+df.cl <- psmelt(bac.cl.ra) %>%
+  group_by(Sample.id, Plant, Pod, Class) %>%
+  summarize(Mean = mean(Abundance)) %>%
+  arrange(-Mean)
+
+df.cl$Class <- as.character(df.cl$Class)
+df.cl$Class[df.cl$Mean < 0.1] <- "Other"
+
+# barplot of bacterial/archaeal composition across pods at Phylum level
+library(rcartocolor)
+display_carto_all(colorblind_friendly = TRUE)
+my_colors = carto_pal(12, "Safe")
+my_colors
+
+# New facet label names for plant variable
+plant.labs <- c("Plant A", "Plant B", "Plant C")
+names(plant.labs) <- c("A", "B", "C")
+
+# Create the plot
+
+pod.cl <- ggplot(data=df.cl, aes(x=Pod, y=Mean, fill=Class))
+plot.pod.cl <- pod.cl + 
+                     geom_bar(aes(), stat="identity", position="fill") + 
+                     #scale_fill_manual(values=c('#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c','#f58231', '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1', '#000075', '#808080', 'lightslateblue', '#000000', 'tomato','hotpink2'))+
+                     scale_fill_manual(values=c("#44AA99", "#332288", "#117733","#CC6677","#DDCC77", "#88CCEE","#661100","#AA4499" ,"#888888"))+
+                     theme(legend.position="bottom") + 
+                     guides(fill=guide_legend(nrow=5))+
+                     labs(y= "Mean Relative Abundance", x="Pod")+
+                     theme(plot.title = element_text(size = rel(1.5), face="bold"),
+                           #axis.line.y = element_line(size=0.5, colour = "black"),
+                           panel.grid.major = element_blank(),
+                           panel.grid.minor = element_blank(),
+                           axis.text=element_text(size=12, face = "bold"),
+                           axis.line.x = element_blank(),
+                           #axis.text.x = element_blank(),
+                           #axis.ticks.x = element_blank(),
+                           #axis.title.x = element_blank(),
+                           axis.title =element_text(size=15,face="bold"),
+                           legend.text=element_text(size = 10),
+                           legend.title = element_text(size=11, face = "bold"),
+                           panel.grid = element_blank(), 
+                           panel.background = element_blank(),
+                           strip.text.x = element_text(size = 12, face = "bold"),
+                           panel.border = element_rect(colour = "black", fill = NA,size = 0.2))+
+                           #facet_grid(~plant, switch = "x", scales = "free_x")+
+                           guides(fill=guide_legend(nrow=2,byrow=TRUE))
+                           
+plot.pod.cl
+
+plot.pod.cl1<- plot.pod.cl +
+  facet_grid(. ~ Plant, labeller = labeller(Plant=plant.labs), scales="free_x")+
+  theme(strip.background =element_rect(fill="grey"))+
+  theme(strip.text = element_text(colour = 'black', size = 14, face = 'bold'))
+plot.pod.cl1
+
+ggsave("plot.pod.class.eps",
+      plot.pod.cl1, device = "eps",
+       width = 8.6, height =5, 
        units= "in", dpi = 600)
-
-# 3. make phyloseq object of undecontaminated non-normalized OTU table
-
-# read the otu table
-otu.bac1 # undecontaminated non-normalized OTU table
-head(otu.bac1)
-otu.bac1 <- rownames_to_column(otu.bac1, var = "OTU.ID")
-# bacterial taxonomy
-taxonomy
-head(taxonomy)
-taxonomy <- rownames_to_column(taxonomy, var = "OTU.ID")
-otu.bac1.tax <- left_join(otu.bac1,taxonomy, by='OTU.ID')
-tax.bac1 <- data.frame(otu.bac1.tax[,c(1,49:55)], row.names = 1)
-head(tax.bac1)
-
-# make phyloseq otu table and taxonomy
-otu.bac1 <- column_to_rownames(otu.bac1, var = "OTU.ID")
-#tax.bac1 <- column_to_rownames(tax.bac1, var = "OTU.ID")
-otu.bac1.phyl = otu_table(otu.bac1, taxa_are_rows = TRUE)
-tax.bac1.phyl = tax_table(as.matrix(tax.bac1))
-
-# make phyloseq map
-rownames(bean.map) <- bean.map$sample.id
-map.phyl <- sample_data(bean.map)
-
-# make phyloseq object  
-
-phyl.bac1.obj <- merge_phyloseq(otu.bac1.phyl,tax.bac1.phyl,map.phyl)
-phyl.bac1.obj
-
-# this converts taxa counts in each sample to a percentage
-phyloTemp3 <-  transform_sample_counts(phyl.bac1.obj, function(x) x/sum(x))
-clusterData3 <-  psmelt(phyloTemp3)
-
-# calculating mean relative abundance per plant
-relabund.perplant3= clusterData3 %>%
-  group_by(plant, OTU) %>%
+# subset genus Rhizobia from the phyloseq object
+#subset_taxa(phyl.obj, Phylum=="Bacteroidetes")
+bac.genus <- tax_glom(phyl.obj, taxrank = "Genus", NArm = F)
+bac.genus.ra <- transform_sample_counts(bac.genus, function(x) x/sum(x))
+bac.genus.ra
+###create dataframe from phyloseq object
+library(data.table)
+df.bac.genus <- data.table(psmelt(bac.genus.ra))
+dim(df.bac.genus)
+# calculating mean relative abundance per genus
+mean.relabund.genus= df.bac.genus %>%
+  group_by(Genus) %>%
   summarise(ra=mean(Abundance)) %>%
-  arrange(desc(ra),.by_group = TRUE) %>%
-  mutate(rank = row_number(-ra))
-# plotting
-rank.abund3 <- ggplot(relabund.perplant3,aes(x=rank,y=ra, colour=plant)) +
-  geom_line(aes(group = plant), size=1.2) +
-  scale_colour_viridis(discrete = T)+
-  labs(x="Rank", y="Relative Abundance")+
-  theme_bw()+
-  theme(axis.text.x=element_text(size = 14),
-        axis.text.y = element_text(size = 14),
-        strip.text.y = element_text(size=18, face = 'bold'),
-        plot.title = element_text(size = rel(2)),
-        axis.title = element_text(size=15,face="bold"),
-        legend.title = element_text(size=15),
-        plot.background = element_blank(),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank())
-rank.abund3
-ggsave("rank.abund.nondecontaminatednonnormalized.eps",
-       rank.abund3, device = "eps",
-       width = 5, height =4.5, 
-       units= "in", dpi = 600)
+  arrange(-ra)
+
+sum(mean.relabund.genus$ra)
+
+
+df.bac.cl <- data.table(psmelt(bac.cl.ra))
+mean.relabund.cl= df.bac.cl %>%
+  group_by(Plant, Class) %>%
+  summarise(ra=mean(Abundance)) %>%
+  arrange(-ra)
+
+
+
+##############################################################################################################################
+
+
+
+
+
+
+
+
+
+
+
+
 
 #####################################################################################################################################
 #####################################################################################################################################
 # Distribution of Chloroplast and mitochondria per smaple
 
 
-#read the unfiltered otu table
+#read the unfiltered otu table 
 otu.unfil <- read.table('OTU_table_tax.txt', sep='\t', header=T, row.names = 1)
 otu.unfil
 tax.unfil <- otu.unfil[,'taxonomy']
@@ -1539,6 +1368,7 @@ dim(otu.tax.unfil)
 tax.unf <- data.frame(otu.tax.unfil[,c(1,49:55)], row.names = 1)
 dim(tax.unf) #267 otus, 7columns/levels
 otu.bac1.unfil <- column_to_rownames(otu.bac1.unfil, var = "OTU.ID")
+dim(otu.bac1.unfil)
 rownames(tax.unf) <- rownames(otu.bac1.unfil)
 
 # make phyloseq otu table and taxonomy
@@ -1546,7 +1376,7 @@ otu.phyl.unf = otu_table(otu.bac1.unfil, taxa_are_rows = TRUE)
 tax.phyl.unf = tax_table(as.matrix(tax.unf))
 
 # make phyloseq map
-rownames(bean.map) <- bean.map$sample.id
+rownames(bean.map) <- bean.map$Sample.id
 map.phyl <- sample_data(bean.map)
 
 # make phyloseq object
@@ -1562,7 +1392,7 @@ bac.o.ra <- transform_sample_counts(bac.o, function(x) x/sum(x))
 bac.o.ra
 
 df.o <- psmelt(bac.o.ra) %>%
-  group_by(sample.id, plant, Order) %>%
+  group_by(Sample.id, Plant, Order) %>%
   summarize(Mean = mean(Abundance)) %>%
   arrange(-Mean)
 
@@ -1612,7 +1442,7 @@ df.ch <- df.o %>%
 df.ch$percent <- df.ch$Mean*100
 
 # Create the plot
-chlo.ra <- ggplot(data=df.ch, aes(x=sample.id, y=percent))
+chlo.ra <- ggplot(data=df.ch, aes(x=Sample.id, y=percent))
 plot.chlo <- chlo.ra + 
                      geom_bar(aes(), stat="identity") + 
                      theme(legend.position="bottom") + 
@@ -1686,13 +1516,101 @@ ggsave("plot.mit.eps",
       units= "in", dpi = 600)
 
 
+otu.tax.unfil.ed <- otu.tax.unfil[,c(1:48,51,52,53)]
+colnames(otu.tax.unfil.ed)
+
+otu.tax.unfil.ed1 <- otu.tax.unfil.ed %>%
+    mutate(Taxonomy = case_when(Order == "Chloroplast" ~ 'Chloroplast',
+                                  Family == "Mitochondria" ~ 'Mitochondria',
+                                  TRUE ~ 'Bacteria/archaea')) %>%
+    mutate(Kingdom = case_when(Order == "Chloroplast" ~ 'Plant',
+                                  Family == "Mitochondria" ~ 'Plant',
+                                  TRUE ~ 'Bacteria/archaea'))
+
+tail(otu.tax.unfil.ed1)
+otu.tax.unfil.ed2 <- otu.tax.unfil.ed1[,c(1:48,52:53)]
+tail(otu.tax.unfil.ed2)
+
+long.dat <- gather(otu.tax.unfil.ed2, Sample, Read, A11:C74, factor_key = T)
+long.dat
 
 
+df.unfil <- long.dat %>%
+  group_by(Sample, Kingdom) %>%
+  summarize(read.number = sum(Read))
+df.unfil1 <- df.unfil %>% 
+  group_by(Sample) %>% 
+  mutate(percent= prop.table(read.number) * 100)
+
+with(df.unfil1, sum(percent[Sample ==  "A11"]))
+
+plot.unfil <- ggplot(df.unfil1, aes(x=Kingdom, y=percent, fill=Kingdom))+
+                    geom_violin() +
+                    #scale_fill_manual(labels = c("A1","A2", "A3","B1","B2","B3","B4","B5","B6","C5","C6","C7"),values=c("#440154FF", "#482677FF","#3F4788FF","#238A8DFF","#1F968BFF","#20A386FF","#29AF7FF","#3CBC75F","#56C667FF","#B8DE29FF","#DCE318FF","#FDE725FF"))+
+                    scale_fill_viridis(discrete = T)+
+                    geom_jitter(position = position_jitter(width = 0.1, height = 0, seed=13), alpha=0.5)+
+                    theme_bw()+
+                    expand_limits(x = 0, y = 0)+
+                    #geom_text(data=sum_rich_plant_new, aes(x=Plant,y=2+max.rich,label=Letter), vjust=0)+
+                    labs(title = "A")+
+                    ylab("Read Proportion (%)")+
+                    theme(legend.position="none",
+                          #axis.text.x=element_blank(),
+                          #axis.ticks.x = element_blank(),
+                          axis.title.x = element_blank(),
+                          axis.text= element_text(size = 14),
+                          strip.text = element_text(size=18, face = 'bold'),
+                          plot.title = element_text(size = 14, face = 'bold'),
+                          #axis.title.y=element_text(size=13,face="bold"),
+                          axis.title.y = element_markdown(size=15,face="bold"),
+                          plot.background = element_blank(),
+                          panel.grid.major = element_blank(),
+                          panel.grid.minor = element_blank())
+                          #plot.margin = unit(c(0, 0, 0, 0), "cm"))
+                          
+                          
+plot.unfil
 
 
+df.unfil.tax <- long.dat %>%
+  group_by(Sample, Taxonomy) %>%
+  summarize(read.number = sum(Read))
+df.unfil.tax1 <- df.unfil.tax %>% 
+  group_by(Sample) %>% 
+  mutate(percent= prop.table(read.number) * 100)
 
+install.packages("ggbeeswarm")
+library(ggbeeswarm)
+plot.unfil.tax <- ggplot(df.unfil.tax1, aes(x=Taxonomy, y=percent, fill=Taxonomy))+
+                    geom_violin() +
+                    #geom_beeswarm(dodge.width = 1, alpha = 0.3)+
+                    #scale_fill_manual(labels = c("A1","A2", "A3","B1","B2","B3","B4","B5","B6","C5","C6","C7"),values=c("#440154FF", "#482677FF","#3F4788FF","#238A8DFF","#1F968BFF","#20A386FF","#29AF7FF","#3CBC75F","#56C667FF","#B8DE29FF","#DCE318FF","#FDE725FF"))+
+                    #scale_fill_viridis(discrete = T)+
+                    geom_jitter(position = position_jitter(width = 0.1, height = 0, seed=13), alpha=0.3)+
+                    theme_bw()+
+                    expand_limits(x = 0, y = 0)+
+                    #geom_text(data=sum_rich_plant_new, aes(x=Plant,y=2+max.rich,label=Letter), vjust=0)+
+                    labs(title = "A")+
+                    ylab("Read Proportion (%)")+
+                    theme(legend.position="none",
+                          #axis.text.x=element_blank(),
+                          #axis.ticks.x = element_blank(),
+                          axis.title.x = element_blank(),
+                          axis.text= element_text(size = 14),
+                          strip.text = element_text(size=18, face = 'bold'),
+                          plot.title = element_text(size = 14, face = 'bold'),
+                          #axis.title.y=element_text(size=13,face="bold"),
+                          axis.title.y = element_markdown(size=15,face="bold"),
+                          plot.background = element_blank(),
+                          panel.grid.major = element_blank(),
+                          panel.grid.minor = element_blank())+
+                          #plot.margin = unit(c(0, 0, 0, 0), "cm"))
+                          stat_summary(fun="median",geom="point", size=7, color="red", shape=95)
+                          #width=1, position=position_dodge(),show.legend = FALSE)
 
-
-
-
-
+plot.unfil.tax
+setwd('/Users/arifinabintarti/Documents/Bean_seed_variability_Bintarti_2020/Figures')
+ggsave("chlomito.tiff",
+       plot.unfil.tax, device = "tiff",
+       width = 5.4, height =4.3, 
+       units= "in", dpi = 600)
