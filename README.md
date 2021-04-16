@@ -2,7 +2,7 @@
 ---
 # Endophytic microbiome variation at the level of a single plant seed
 ---
-## By A. Fina Bintarti, Abby Sulesky-Grieb, Nejc Stopnisek, A Shade
+## By A. Fina Bintarti, Abby Sulesky-Grieb, Nejc Stopnisek, Ashley Shade
 ---
 *This work is in preparation*
 
