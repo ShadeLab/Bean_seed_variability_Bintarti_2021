@@ -1,4 +1,5 @@
 #################################### Bean seed microbiomes variability (new fungal ITS analysis from Nejc) #####################################
+##
 # Date: FJanuary 16th 2021
 # By : Ari Fina Bintarti
 # INSTALL PACKAGES
@@ -83,13 +84,13 @@ otu.tax.its <- merge(otu.its1.unfil,taxonomy.its, by = "OTUid")
 dim(otu.tax.its) #72 fungal otus before plant and microbial contaminants removal
 
 #filter out the plantae taxa from the 'otu.tax.its' table
-otu.fil <- filter(otu.tax.its, Kingdom != "Plantae")
-dim(otu.fil) #59 otus, filter out 13 plantae taxa
+otu.filter <- filter(otu.tax.its, Kingdom != "Plantae")
+dim(otu.filter) #59 otus, filter out 13 plantae taxa
 
 #separate the otu table and taxonomy table
-otu.tab <- data.frame(otu.fil[,c(1:46)])
+otu.tab <- data.frame(otu.filter[,c(1:46)])
 dim(otu.tab)# 59otus,
-tax.tab <- data.frame(otu.fil[,c(1,47:53)])
+tax.tab <- data.frame(otu.filter[,c(1,47:53)])
 head(tax.tab)
 
 #fungal otu
@@ -227,25 +228,47 @@ library(graphics)
 
 # 1. rarefaction curve for decontaminated non-normalized OTU table
 
-otu.fil # decontaminated non-normalized OTU table
 
-its.map.rare <- its.map[its.map$Sample.id%in%colnames(otu.fil),]
-curve_colors <- rep("darkgreen", ncol(otu.fil))
-curve_colors[its.map.rare$Plant=="A"] <- "#440154FF"
-curve_colors[its.map.rare$Plant=="B"] <- "#1F968BFF"
-curve_colors[its.map.rare$Plant=="C"] <- "#FDE725FF"
 
-lty <- c("solid", "solid", "solid")
+# decontaminated non-normalized OTU table
+otu.fil
+dim(otu.fil)
 
-setEPS()
-postscript("Fig.1A Fungal rarecurve decontaminated non-normalized.eps", height = 5, width = 5)
-rarecurve(t(otu.fil), step=1, label=F, col = curve_colors, lty=lty, lwd=2, xlab = "Reads", 
-                           ylab = "Fungal OTUs", main="A", adj=0)
+# fungal taxonomy
+head(tax.fil.edited)
+dim(tax.fil.edited)
+rownames(tax.fil.edited) <- rownames(otu.fil)
+# make phyloseq otu table and taxonomy
+otu.fil.phyl = otu_table(otu.fil, taxa_are_rows = TRUE)
+tax.fil.phyl = tax_table(as.matrix(tax.fil.edited))
+
+# make phyloseq map
+rownames(its.map) <- its.map$Sample.id
+its.map.phyl <- sample_data(its.map)
+
+# make phyloseq object  
+fil.obj <- merge_phyloseq(otu.fil.phyl,tax.fil.phyl,its.map.phyl)
+fil.obj
+
+
+# OR
+
+
+#its.map.rare <- its.map[its.map$Sample.id%in%colnames(otu.fil),]
+#curve_colors <- rep("darkgreen", ncol(otu.fil))
+#curve_colors[its.map.rare$Plant=="A"] <- "#440154FF"
+#curve_colors[its.map.rare$Plant=="B"] <- "#1F968BFF"
+#curve_colors[its.map.rare$Plant=="C"] <- "#FDE725FF"
+
+#lty <- c("solid", "solid", "solid")
+
+#setEPS()
+#postscript("Fig.1A Fungal rarecurve decontaminated non-normalized.eps", height = 5, width = 5)
+#rarecurve(t(otu.fil), step=1, label=F, col = curve_colors, lty=lty, lwd=2, xlab = "Reads", ylab = "Fungal OTUs", main="A", adj=0)
 # Add a legend
-legend(4000, 5, legend=c("A", "B", "C"),
-       col=c("#440154FF", "#1F968BFF","#FDE725FF"), lty = lty, lwd=2, title = "Plant")
-dev.off()
-graphics.off()
+#legend(4000, 5, legend=c("A", "B", "C"),col=c("#440154FF", "#1F968BFF","#FDE725FF"), lty = lty, lwd=2, title = "Plant")
+#dev.off()
+#graphics.off()
 
 
 # 2. rarefaction curve for undecontaminated non-normalized OTU table
@@ -261,7 +284,44 @@ graphics.off()
 #legend(7000, 6, legend=c("A", "B", "C"),col=c("#440154FF", "#1F968BFF","#FDE725FF"), lty = lty, lwd=2, title = "Plant")
 #dev.off()
 
+#set seed
+set.seed(42)
 
+#rarefy the data
+# data = phyloseq object of decontaminated non normalized otu table
+p.rare.its <- ggrare(fil.obj, step = 1, color = "Plant", label = "Sample", se = FALSE)
+
+#set up your own color palette
+Palette <- c("#440154FF","#1F968BFF","#FDE725FF")
+names(Palette) <- levels(sample_data(fil.obj)$Plant)
+Palette
+
+#plot the rarecurve
+#p <- ggrare(psdata, step = 1000, color = "SampleType", label = "Sample", se = FALSE)
+p.its <- p.rare.its + 
+ #facet_wrap(~Plant)+
+ theme_bw()+
+ scale_color_manual(values = Palette)+
+ labs(title = "(b) Fungi")+
+ expand_limits(x = 0, y = 0)+
+ theme( strip.text.x = element_text(size=14, face='bold'),
+        axis.text=element_text(size = 14),
+        #axis.text.y = element_text(size = 13),
+        axis.title.y = element_blank(),
+        strip.text.y = element_text(size=18, face = 'bold'),
+        plot.title = element_text(size =20 ,face='bold'),
+        axis.title.x = element_blank(),
+        #axis.title.x = element_text(size=15,face="bold"),
+        #axis.title.y = element_markdown(),
+        legend.position = "none",
+        #legend.title = element_text(size=15),
+        plot.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+        #xlab("Sequencing depth (Reads)") +  ylab("Fungal<br>OTU Number")
+ 
+
+plot(p.its)
 ######################################################################################################################################
 ######################################################################################################################################
 
@@ -300,31 +360,47 @@ clusterData2.its <-  psmelt(phyloTemp2.its)
 
 # calculating mean relative abundance per plant
 relabund.perplant2.its= clusterData2.its %>%
-  group_by(Plant, OTU) %>%
+  group_by(Plant,Pod, OTU) %>%
   summarise(ra=mean(Abundance)) %>%
   arrange(desc(ra),.by_group = TRUE) %>%
   mutate(rank = row_number(-ra))
 
 relabund.perplant2.its$Plant <- as.factor(relabund.perplant2.its$Plant)
+relabund.perplant2.its$Pod <- as.factor(relabund.perplant2.its$Pod)
+
+#set up your own color palette
+col.pal.its <- c("#440154FF","#1F968BFF","#FDE725FF")
+names(col.pal.its) <- levels(relabund.perplant2.its$Plant)
+col.pal.its
 
 # plotting
 rank.abund2.its <- ggplot(relabund.perplant2.its,aes(x=rank,y=ra, colour=Plant)) +
-  geom_line(aes(group = Plant), size=1.2) +
-  scale_colour_viridis(discrete = T)+
-  labs(title = "B")+
+  geom_line(aes(group = Pod), size=1) +
+  scale_colour_manual(values = col.pal.its)+
+  labs(title = "(d)")+
   theme_bw()+
   theme(axis.text.x=element_text(size = 14),
+        axis.title = element_blank(),
         axis.text.y = element_text(size = 14),
         strip.text.y = element_text(size=18, face = 'bold'),
-        plot.title = element_text(size =14 ,face='bold',hjust = 0.5),
-        axis.title = element_text(size=13,face="bold"),
+        plot.title = element_text(size =20 ,face='bold'),
+        #axis.title = element_text(size=14,face="bold"),
+        legend.position = "none",
         #legend.title = element_text(size=15),
         plot.background = element_blank(),
         panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank())+
-        xlab("\nRank") +  ylab("Fungal Relative Abundance")+
-        guides(colour=guide_legend(title.position = "top", nrow = 1, byrow = T,title.hjust =0.5))
+        panel.grid.minor = element_blank())
+        #xlab("\nRank") +  ylab("Fungal<br>Relative Abundance")
+        #guides(colour=guide_legend(title.position = "top", keywidth = 2, nrow = 1, byrow = T,title.hjust =0.5,
+                                   #title.theme = element_text(size=13),
+                                   #label.theme = element_text(size = 12, face = 'bold')))
 rank.abund2.its
+
+
+data.rank.abund2.its <- ggplot_build(rank.abund2.its)
+gtable.rank.abund2.its <- ggplot_gtable(data.rank.abund2.its)
+
+
 ggsave("Fig.2.Fungal rankabund curve.eps",
        rank.abund2.its, device = "eps",
        width = 5, height =4.5, 
@@ -427,12 +503,14 @@ library(viridis)
 #Fig.1A
 
 fg.rich.plant <- ggplot(its.map, aes(x=Plant, y=Richness, fill=Plant))+
-                    geom_boxplot() +
+                    #geom_boxplot() +
+                    geom_violin(alpha=0.4, position = position_dodge(width = .75),size=0.5, trim = F) +
                     scale_fill_viridis(discrete = T)+
-                    geom_jitter(position = position_jitter(width = 0.1, height = 0, seed=13), alpha=0.5)+
+                    #geom_jitter(position = position_jitter(width = 0.1, height = 0, seed=13), alpha=0.5)+
+                    geom_point(shape = 21,size=2, position = position_jitterdodge(),alpha=1)+
                     theme_bw()+
                     expand_limits(x = 0, y = 0)+
-                    labs(title = "E")+
+                    labs(title = "(e)")+
                     ylab("Fungal<br>Richness")+
                     xlab("\nPlant")+
                     #geom_text(data=sum_rich_plant_new, aes(x=plant,y=2+max.rich,label=Letter), vjust=0)+
@@ -440,12 +518,13 @@ fg.rich.plant <- ggplot(its.map, aes(x=Plant, y=Richness, fill=Plant))+
                           axis.text.x=element_text(size = 14),
                           axis.text.y = element_text(size = 14),
                           strip.text.y = element_text(size=18, face = 'bold'),
-                          plot.title = element_text(size = 14, face = 'bold'),
+                          plot.title = element_text(size = 20, face = 'bold'),
                           axis.title.x=element_text(size=15,face="bold"),
                           axis.title.y = element_markdown(size=15,face="bold"),
                           plot.background = element_blank(),
                           panel.grid.major = element_blank(),
-                          panel.grid.minor = element_blank())
+                          panel.grid.minor = element_blank())+
+                          stat_summary(fun="median",geom="point", size=13, color="red", shape=95)
 fg.rich.plant
 # save the plot
 ggsave("Fig.3A.Fungal richness among plants.tiff",
@@ -459,12 +538,14 @@ ggsave("Fig.3A.Fungal richness among plants.tiff",
 #Fig.1B
 
 fg.rich.pod <- ggplot(its.map, aes(x=Pod, y=Richness, fill = Pod))+
-                    geom_boxplot() +
+                    #geom_boxplot() +
+                    geom_violin(alpha=0.4, position = position_dodge(width = .75),size=0.5, trim = F) +
                     scale_fill_viridis(discrete = T)+
-                    geom_jitter(position = position_jitter(width = 0.1, height = 0, seed=13), alpha=0.5)+
+                    #geom_jitter(position = position_jitter(width = 0.1, height = 0, seed=13), alpha=0.5)+
+                    geom_point(shape = 21,size=2, position = position_jitterdodge(),alpha=1)+
                     theme_bw()+
                     expand_limits(x = 0, y = 0)+
-                    labs(title = "F")+
+                    labs(title = "(f)")+
                     xlab("\nPod")+
                     #geom_text(data=new.rich_pod.summarized,aes(x=pod,y=0.5+max.rich,label=new.rich_pod.summarized$groups),vjust=0)+
                     theme(legend.position="none",
@@ -472,12 +553,13 @@ fg.rich.pod <- ggplot(its.map, aes(x=Pod, y=Richness, fill = Pod))+
                           axis.text.y = element_blank(),
                           strip.text.y = element_blank(),
                           axis.ticks.y = element_blank(),
-                          plot.title = element_text(size = 14,face =  'bold'),
+                          plot.title = element_text(size = 20,face =  'bold'),
                           axis.title.x =element_text(size=15,face="bold"),
                           axis.title.y = element_blank(),
                           plot.background = element_blank(),
                           panel.grid.major = element_blank(),
-                          panel.grid.minor = element_blank())
+                          panel.grid.minor = element_blank())+
+                          stat_summary(fun="median",geom="point", size=6, color="red", shape=95)
 fg.rich.pod
 fg.rich.pod1 <- fg.rich.pod +
   facet_grid(. ~ Plant, scales="free_x")+
@@ -620,14 +702,14 @@ plot.fg.pod.cl <- fg.pod.cl +
                      geom_bar(aes(), stat="identity", position="fill") + 
                      #scale_fill_manual(values=c('#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c','#f58231', '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1', '#000075', '#808080', 'lightslateblue', '#000000', 'tomato','hotpink2'))+
                      scale_fill_manual(values=c("#44AA99", "#332288", "#117733","#CC6677","#DDCC77", "#88CCEE","#661100","#AA4499" ,"#888888",'tomato','#ffd8b1'))+
-                     theme(legend.position="bottom") + 
+                     theme(legend.position="right") + 
                      guides(fill=guide_legend(nrow=5))+
-                     labs(y= "Mean Relative Abundance", x="Pod")+
-                     theme(plot.title = element_text(size = rel(1.5), face="bold"),
+                     labs(y= "Mean Relative Abundance", x="Pod", title = "(b) Fungi")+
+                     theme(plot.title = element_text(size = 20, face="bold"),
                            #axis.line.y = element_line(size=0.5, colour = "black"),
                            panel.grid.major = element_blank(),
                            panel.grid.minor = element_blank(),
-                           axis.text=element_text(size=12, face = "bold"),
+                           axis.text=element_text(size=14),
                            axis.line.x = element_blank(),
                            #axis.text.x = element_blank(),
                            #axis.ticks.x = element_blank(),
@@ -640,15 +722,19 @@ plot.fg.pod.cl <- fg.pod.cl +
                            strip.text.x = element_text(size = 12, face = "bold"),
                            panel.border = element_rect(colour = "black", fill = NA,size = 0.2))+
                            #facet_grid(~plant, switch = "x", scales = "free_x")+
-                           guides(fill=guide_legend(nrow=3,byrow=TRUE))
+                           guides(fill=guide_legend(ncol=1,bycol=TRUE))
                            
 plot.fg.pod.cl
 
 plot.fg.pod.cl1<- plot.fg.pod.cl +
-  facet_grid(. ~ Plant, labeller = labeller(Plant=plant.labs), scales="free_x")+
-  theme(strip.background =element_rect(fill="grey"))+
-  theme(strip.text = element_text(colour = 'black', size = 14, face = 'bold'))
+  facet_grid(. ~ Plant, scales="free_x")+
+  theme(strip.text.x = element_blank())
 plot.fg.pod.cl1
+
+
+pd.pod <- pd.p +
+  facet_grid(. ~ Plant, scales="free_x")+
+  theme(strip.text = element_blank())
 
 
 ggsave("Fig.4.Fungal relative abund.eps",
@@ -717,23 +803,23 @@ pod.pcoa.its <- ggplot(data = its.map.pcoa, aes(x=ax1.scores.its, y=ax2.scores.i
             geom_point(data = its.map.pcoa, aes(x = ax1.scores.its, y = ax2.scores.its, col=factor(Plant)),size=5, alpha =0.7)+
             #scale_color_manual(labels = c("A1","A2", "A3","B1","B2","B3","B4","B5","B6","C5","C6","C7"),values=c("#440154FF", "#482677FF","#3F4788FF","#238A8DFF","#1F968BFF","#20A386FF","#29AF7FFF","#3CBB75FF","#56C667FF","#B8DE29FF","#DCE318FF","#FDE725FF"))+
             scale_color_viridis(discrete = T) +
-            scale_x_continuous(name=paste("PCoA1: ",round(ax1.its,3)*100,"% var. explained", sep=""))+
-            scale_y_continuous(name=paste("PCoA2: ",round(ax2.its,3)*100,"% var. explained", sep=""))+
-            coord_fixed() + 
-            labs(colour = "Plant")+
+            scale_x_continuous(name=paste("PCoA1:\n",round(ax1.its,3)*100,"% var. explained", sep=""))+
+            scale_y_continuous(name=paste(round(ax2.its,3)*100,"% var. explained", sep=""))+
+            #coord_fixed() + 
+            labs(colour = "Plant", title = "(b) Fungi")+
             theme(legend.position="right",
             plot.background = element_blank(),
             panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(),
-            plot.title = element_text(size = rel(1), face="bold"),
-            axis.text=element_text(size=10), 
-            axis.title=element_text(size=12,face="bold"),
-            legend.text=element_text(size=12),
-            legend.title = element_text(size = 12),
+            plot.title = element_text(size = 20, face="bold"),
+            axis.text=element_text(size=14), 
+            axis.title=element_text(size=15,face="bold"),
+            legend.text=element_text(size=14, face = 'bold'),
+            legend.title = element_text(size = 14, face = 'bold'),
             legend.spacing.x = unit(0.05, 'cm'))
 
 set.seed(13)
-pod.pcoa.its2 <- pod.pcoa.its + geom_text_repel(aes(label = Pod),size = 3) 
+pod.pcoa.its2 <- pod.pcoa.its + geom_text_repel(aes(label = Pod),size = 3, max.overlaps = Inf) 
 pod.pcoa.its2
 
 ggsave("Fig.5.Fungal PCoA plot tiff",
@@ -765,7 +851,8 @@ nested.npmanova(otu_dist.its ~ Plant + Pod,
 
 ###############################################################################################################################
 
-## Betadisper 
+## Betadisper
+set.seed  (13)
 groups.plant.its <- factor(c(rep("A",11),rep("B",23), rep("C",11)))
 otu_dist.its <- vegdist(t(fgnorm_PA), binary = TRUE, method = "jaccard") #Sorensen
 mod.its <- betadisper(otu_dist.its, groups.plant.its)
@@ -778,33 +865,37 @@ dispersion.its <- rownames_to_column(dispersion.its, "Sample.id")
 #join dispersion index to the map 
 its.map <- merge(its.map, dispersion.its, by="Sample.id", all = T)
 
-
-boxplot(mod.its)
-# Null hypothesis of no difference in dispersion between groups
-anova(mod.its) # (ANOVA, df=2, F-value=  0.22, p-val=0.802) there is no significant differences in dispersion between groups
+set.seed  (13)
+#permutation-based test for multivariate homogeneity of group dispersion (variances)
+permod.its <- permutest(mod.its, permutations = 999, pairwise = T)
+permod.its # there is no significant differences in dispersion between groups
 # the variances among groups are homogenous,
 
 #plot betadisper among plant
 
 # Fig. 4 Betadispersion Plot
-
+library(viridis)
 disperplot.its <- ggplot(its.map, aes(x=Plant, y=Dispersion, fill=Plant))+
-                    geom_boxplot() +
+                    geom_violin(alpha=0.4, position = position_dodge(width = .75),size=0.5, trim = F) +
                     #scale_fill_manual(labels = c("A", "B", "C"),values=c("#CC6677", "#DDCC77","#117733"))+
                     scale_fill_viridis(discrete = T)+
-                    geom_jitter(position = position_jitter(width = 0.1, height = 0, seed=13), alpha=0.5)+
+                    geom_point(shape = 21,size=2, position = position_jitterdodge(),alpha=1)+
+                    #geom_jitter(position = position_jitter(width = 0.1, height = 0, seed=13), alpha=0.5)+
                     theme_bw()+
                     expand_limits(x = 0, y = 0)+
-                    labs(y="Dispersion")+
+                    labs(title= "(d)", y="Dispersion")+
                     theme(legend.position="none",
                           axis.text.x=element_text(size = 14),
                           axis.text.y = element_text(size = 14),
                           strip.text.y = element_text(size=18, face = 'bold'),
-                          plot.title = element_text(size = rel(2)),
-                          axis.title=element_text(size=18,face="bold"),
+                          plot.title = element_text(size = 20, face = 'bold'),
+                          #axis.title.x =element_text(size=18,face="bold"),
+                          axis.title.y=element_blank(),
+                          axis.title.x=element_blank(),
                           plot.background = element_blank(),
                           panel.grid.major = element_blank(),
-                          panel.grid.minor = element_blank())
+                          panel.grid.minor = element_blank())+
+                          stat_summary(fun="median",geom="point", size=13, color="red", shape=95)
 disperplot.its
 # save the plot
 ggsave("Fig.6.Fungal betadisper.tiff",
@@ -820,146 +911,64 @@ ggsave("Fig.6.Fungal betadisper.tiff",
 # Read Proportion of Chloroplast and mitochondria 
 
 
-#read the unfiltered otu table 
-otu.unfil <- read.table('OTU_table_tax.txt', sep='\t', header=T, row.names = 1)
-otu.unfil
-tax.unfil <- otu.unfil[,'taxonomy']
-tax.unfil
-
-#write.csv(tax.unfil, file = "taxonomy.unfil.csv")
-dim(otu.unfil)
-otu.unfil <- otu.unfil[,-51]
-dim(otu.unfil) # otu= 311, otu table still has Mock, NC, and PC in the sample
-sort(rowSums(otu.unfil, na.rm = FALSE, dims = 1), decreasing = F)
-
-#read taxonomy
-taxonomy.unfil = read.csv("taxonomy.unfil.edit.csv", header=T)
-rownames(taxonomy.unfil) <- rownames(otu.unfil)
-dim(taxonomy.unfil)
-
-#read the metadata
-map <- read.csv("bean.var.map.csv")
-
-#select only biological sample from otu table
-otu.bac.unfil <- otu.unfil[,1:47] #unselect Mock, NC, and PC from the otu table
-dim(otu.bac.unfil)
-sort(rowSums(otu.bac.unfil, na.rm = FALSE, dims = 1), decreasing = F)
-
-# remove OTUs that do not present in sample
-otu.bac1.unfil=otu.bac.unfil[which(rowSums(otu.bac.unfil) > 0),]
-dim(otu.bac1.unfil) # otu= 267, otu table before normalization using metagenomeSeq package and before decontamination
-sort(rowSums(otu.bac1.unfil, na.rm = FALSE, dims = 1), decreasing = F)
-
-# load the otu table
-head(otu.bac1.unfil)
-otu.bac1.unfil <- rownames_to_column(otu.bac1.unfil, var = "OTU.ID")
-
-# merge the taxonomy with otu table
-head(taxonomy.unfil)
-taxonomy.unfil <- rownames_to_column(taxonomy.unfil, var = "OTU.ID")
-otu.tax.unfil <- merge(otu.bac1.unfil, taxonomy.unfil, by="OTU.ID")
-dim(otu.tax.unfil)
+#read the unfiltered otu table and tax table
+otu.tax.its
 
 #select only the otu table and "Order"  & "Family"
-otu.tax.unfil.ed <- otu.tax.unfil[,c(1:48,52,53)]
-colnames(otu.tax.unfil.ed)
+otu.its <- otu.tax.its[,c(1:46)]
+otu.its <- column_to_rownames(otu.its, var = "OTUid")
+sum(otu.its)
+otu.its.unfil <- otu.tax.its[,c(1:47)]
+colnames(otu.its.unfil)
 
 #edit the taxonomy
-otu.tax.unfil.ed1 <- otu.tax.unfil.ed %>%
-    mutate(Taxonomy = case_when(Order == "Chloroplast" ~ 'Chloroplast',
-                                  Family == "Mitochondria" ~ 'Mitochondria',
-                                  TRUE ~ 'Bacteria/archaea')) %>%
-    mutate(Kingdom = case_when(Order == "Chloroplast" ~ 'Plant',
-                                  Family == "Mitochondria" ~ 'Plant',
-                                  TRUE ~ 'Bacteria/archaea'))
+otu.its.unfil.ed <- otu.its.unfil %>%
+    mutate(Taxonomy = case_when(Kingdom == "Plantae" ~ 'Plant',
+                                TRUE ~ 'Fungi'))
 
-tail(otu.tax.unfil.ed1)
-otu.tax.unfil.ed2 <- otu.tax.unfil.ed1[,c(1:48,51:52)]
-colnames(otu.tax.unfil.ed2)
-tail(otu.tax.unfil.ed2)
-
-long.dat <- gather(otu.tax.unfil.ed2, Sample, Read, A11:C74, factor_key = T)
-long.dat
+long.dat.its <- gather(otu.its.unfil.ed, Sample, Read, A12:C74, factor_key = T)
+long.dat.its
 
 
-df.unfil <- long.dat %>%
-  group_by(Sample, Kingdom) %>%
+df.unfil.its <- long.dat.its %>%
+  group_by(Sample, Taxonomy) %>%
   summarize(read.number = sum(Read))
-df.unfil1 <- df.unfil %>% 
+df.unfil.its1 <- df.unfil.its %>% 
   group_by(Sample) %>% 
   mutate(percent= prop.table(read.number) * 100)
 
-with(df.unfil1, sum(percent[Sample ==  "A11"]))
+with(df.unfil.its1, sum(percent[Sample ==  "A12"]))
 
-plot.unfil <- ggplot(df.unfil1, aes(x=Kingdom, y=percent, fill=Kingdom))+
-                    geom_violin() +
+plot.unfil.its <- ggplot(df.unfil.its1, aes(x=Taxonomy, y=percent, fill=Taxonomy))+
+                    geom_violin(trim = F, scale="width") +
                     #scale_fill_manual(labels = c("A1","A2", "A3","B1","B2","B3","B4","B5","B6","C5","C6","C7"),values=c("#440154FF", "#482677FF","#3F4788FF","#238A8DFF","#1F968BFF","#20A386FF","#29AF7FF","#3CBC75F","#56C667FF","#B8DE29FF","#DCE318FF","#FDE725FF"))+
-                    scale_fill_viridis(discrete = T)+
+                    scale_fill_manual(labels = c("Fungi","Plant"),values=c("#88CCEE", "#117733"))+
                     geom_jitter(position = position_jitter(width = 0.1, height = 0, seed=13), alpha=0.5)+
                     theme_bw()+
                     expand_limits(x = 0, y = 0)+
                     #geom_text(data=sum_rich_plant_new, aes(x=Plant,y=2+max.rich,label=Letter), vjust=0)+
-                    labs(title = "A")+
+                    labs(title = "B")+
                     ylab("Read Proportion (%)")+
                     theme(legend.position="none",
-                          #axis.text.x=element_blank(),
-                          #axis.ticks.x = element_blank(),
+                          axis.text.y=element_blank(),
+                          axis.ticks.y = element_blank(),
                           axis.title.x = element_blank(),
-                          axis.text= element_text(size = 14),
+                          axis.text.x= element_text(size = 14),
                           strip.text = element_text(size=18, face = 'bold'),
                           plot.title = element_text(size = 14, face = 'bold'),
-                          #axis.title.y=element_text(size=13,face="bold"),
-                          axis.title.y = element_markdown(size=15,face="bold"),
-                          plot.background = element_blank(),
-                          panel.grid.major = element_blank(),
-                          panel.grid.minor = element_blank())
-                          #plot.margin = unit(c(0, 0, 0, 0), "cm"))
-                          
-                          
-plot.unfil
-
-
-df.unfil.tax <- long.dat %>%
-  group_by(Sample, Taxonomy) %>%
-  summarize(read.number = sum(Read))
-df.unfil.tax1 <- df.unfil.tax %>% 
-  group_by(Sample) %>% 
-  mutate(percent= prop.table(read.number) * 100)
-
-install.packages("ggbeeswarm")
-library(ggbeeswarm)
-plot.unfil.tax <- ggplot(df.unfil.tax1, aes(x=Taxonomy, y=percent, fill=Taxonomy))+
-                    geom_violin() +
-                    #geom_beeswarm(dodge.width = 1, alpha = 0.3)+
-                    #scale_fill_manual(labels = c("A1","A2", "A3","B1","B2","B3","B4","B5","B6","C5","C6","C7"),values=c("#440154FF", "#482677FF","#3F4788FF","#238A8DFF","#1F968BFF","#20A386FF","#29AF7FF","#3CBC75F","#56C667FF","#B8DE29FF","#DCE318FF","#FDE725FF"))+
-                    #scale_fill_viridis(discrete = T)+
-                    geom_jitter(position = position_jitter(width = 0.1, height = 0, seed=13), alpha=0.3)+
-                    theme_bw()+
-                    expand_limits(x = 0, y = 0)+
-                    #geom_text(data=sum_rich_plant_new, aes(x=Plant,y=2+max.rich,label=Letter), vjust=0)+
-                    labs(title = "A")+
-                    ylab("Read Proportion (%)")+
-                    theme(legend.position="none",
-                          #axis.text.x=element_blank(),
-                          #axis.ticks.x = element_blank(),
-                          axis.title.x = element_blank(),
-                          axis.text= element_text(size = 14),
-                          strip.text = element_text(size=18, face = 'bold'),
-                          plot.title = element_text(size = 14, face = 'bold'),
-                          #axis.title.y=element_text(size=13,face="bold"),
-                          axis.title.y = element_markdown(size=15,face="bold"),
+                          axis.title.y=element_blank(),
+                          #axis.title.y = element_markdown(size=15,face="bold"),
                           plot.background = element_blank(),
                           panel.grid.major = element_blank(),
                           panel.grid.minor = element_blank())+
                           #plot.margin = unit(c(0, 0, 0, 0), "cm"))
                           stat_summary(fun="median",geom="point", size=7, color="red", shape=95)
-                          #width=1, position=position_dodge(),show.legend = FALSE)
+plot.unfil.its
 
-plot.unfil.tax
 setwd('/Users/arifinabintarti/Documents/Bean_seed_variability_Bintarti_2020/Figures')
-ggsave("chlomito.tiff",
-       plot.unfil.tax, device = "tiff",
-       width = 5.4, height =4.3, 
+ggsave("plant.its.tiff",
+       plot.unfil.its, device = "tiff",
+       width = 5, height =5, 
        units= "in", dpi = 600)
 
 
