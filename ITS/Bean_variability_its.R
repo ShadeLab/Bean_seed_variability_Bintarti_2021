@@ -971,15 +971,96 @@ ggsave("plant.its.tiff",
        width = 5, height =5, 
        units= "in", dpi = 600)
 
+#####################################################################################################################################
+######################################################################################################################################
 
+#### 1.  Occupancy-mean relative abundance across metadata #####
+setwd('/Users/arifinabintarti/Documents/PAPER/Bean_seed_variability_Bintarti_2020/ITS/')
+wd <- print(getwd())
 
+# load normalized otu table
+fgnorm
+dim(fgnorm)
+head(fgnorm)
+#otu.norm <- column_to_rownames(otu.norm, var = "OTUid")
 
+# load fungal taxonomy
+head(tax.fil.edited)
+tax.fil.edited <- rownames_to_column(tax.fil.edited, var = "OTUid")
+dim(tax.fil.edited)
 
+# load metadata
+its.map <- read.csv("bean.var.map.its.csv")
+head(its.map)
 
+##calculate the occupancy of each OTUid across Sample.id/Seed
+fgnorm.seed.PA <- 1*((fgnorm>0)==1)
+Occ.seed.its <- rowSums(fgnorm.seed.PA)/ncol(fgnorm.seed.PA)
+df.Occ.seed.its <- as.data.frame(Occ.seed.its)
+df.Occ.seed.its <- rownames_to_column(df.Occ.seed.its, var = "OTUid")
+df.Occ.seed.its.tax <- merge(df.Occ.seed.its, tax.fil.edited, by="OTUid")
+sort.df.Occ.seed.its.tax <- df.Occ.seed.its.tax[order(df.Occ.seed.its.tax$Occ.seed.its, decreasing = TRUE),]
+write.csv(sort.df.Occ.seed.its.tax, file = "sort.df.Occ.seed.its.tax.csv")
 
+### 2. Occupancy across plants
 
+longDF.plant.its <- data.frame(OTUid=as.factor(rownames(fgnorm)), fgnorm) %>%
+  gather(Sample.id, abun, -OTUid) %>%  #keep same column nameing as in mapping file, calling counts as "abun" (abundance)
+  left_join(its.map) %>%  #will add the info form mapping file (grouped by the 'Sample.id' column)
+  left_join(tax.fil.edited)  %>% #adding the taxonomy info (grouped by the 'OTU.ID' column)
+  group_by(OTUid, Plant) %>%
+  #BioProject, plant_family, plant_genus, host, compartment
+  summarise(n=sum(abun))
+  #mutate(n=if_else(n>0, 1,0))
 
+##build the new table: OTUid as rownames and Plant as colnames
+wideDF.plant.its <- as.data.frame(spread(longDF.plant.its, OTUid, n, fill=0))
+rownames(wideDF.plant.its) <-  wideDF.plant.its[,1]
+wideDF.plant.its <- wideDF.plant.its[,-1]
+wideDF.plant.its <- t(wideDF.plant.its)
+dim(wideDF.plant.its) #57 taxa, 3 plant 
 
+##calculate the occupancy of each otu across plants
+wideDF.plant.PA.its <- 1*((wideDF.plant.its>0)==1)
+Occ.plant.its <- rowSums(wideDF.plant.PA.its)/ncol(wideDF.plant.PA.its)
+df.Occ.plant.its <- as.data.frame(Occ.plant.its)
+df.Occ.plant.its <- rownames_to_column(df.Occ.plant.its, var = "OTUid")
+df.Occ.plant.tax.its <- merge(df.Occ.plant.its, tax.fil.edited, by="OTUid")
+sort.df.Occ.plant.tax.its <- df.Occ.plant.tax.its[order(df.Occ.plant.tax.its$Occ.plant.its, decreasing = TRUE),]
+write.csv(sort.df.Occ.plant.tax.its, file = "sort.df.Occ.plant.tax.its.csv")
 
+### 3. Occupancy across seeds within plant
 
+# 1.Plant A
+fgnormA <- data.frame(fgnorm[,c(1:11)])
+##calculate the occupancy of each otu across seeds within plant
+fgnormA.PA <- 1*((fgnormA>0)==1)
+fgOcc.A <- rowSums(fgnormA.PA)/ncol(fgnormA.PA)
+df.fgOcc.A <- as.data.frame(fgOcc.A)
+df.fgOcc.A <- rownames_to_column(df.fgOcc.A, var = "OTUid")
+df.fgOcc.A.tax <- merge(df.fgOcc.A, tax.fil.edited, by="OTUid")
+sort.df.fgOcc.A.tax <- df.fgOcc.A.tax[order(df.fgOcc.A.tax$fgOcc.A, decreasing = TRUE),]
+write.csv(sort.df.fgOcc.A.tax, file = "sort.df.fgOcc.A.tax.csv")
+
+# 2.Plant B
+fgnormB <- data.frame(fgnorm[,c(12:34)])
+##calculate the occupancy of each otu across seeds within plant
+fgnormB.PA <- 1*((fgnormB>0)==1)
+fgOcc.B <- rowSums(fgnormB.PA)/ncol(fgnormB.PA)
+df.fgOcc.B <- as.data.frame(fgOcc.B)
+df.fgOcc.B <- rownames_to_column(df.fgOcc.B, var = "OTUid")
+df.fgOcc.B.tax <- merge(df.fgOcc.B, tax.fil.edited, by="OTUid")
+sort.df.fgOcc.B.tax <- df.fgOcc.B.tax[order(df.fgOcc.B.tax$fgOcc.B, decreasing = TRUE),]
+write.csv(sort.df.fgOcc.B.tax, file = "sort.df.fgOcc.B.tax.csv")
+
+# 3.Plant C
+fgnormC <- data.frame(fgnorm[,c(35:45)])
+##calculate the occupancy of each otu across seeds within plant
+fgnormC.PA <- 1*((fgnormC>0)==1)
+fgOcc.C <- rowSums(fgnormC.PA)/ncol(fgnormC.PA)
+df.fgOcc.C <- as.data.frame(fgOcc.C)
+df.fgOcc.C <- rownames_to_column(df.fgOcc.C, var = "OTUid")
+df.fgOcc.C.tax <- merge(df.fgOcc.C, tax.fil.edited, by="OTUid")
+sort.df.fgOcc.C.tax <- df.fgOcc.C.tax[order(df.fgOcc.C.tax$fgOcc.C, decreasing = TRUE),]
+write.csv(sort.df.fgOcc.C.tax, file = "sort.df.fgOcc.C.tax.csv")
 

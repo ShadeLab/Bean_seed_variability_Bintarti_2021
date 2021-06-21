@@ -273,6 +273,8 @@ set.seed(42)
 #rarefy the data
 # make sure to run ggrare function in the "generating_rarecurfe.r" file
 # data = phyloseq object of decontaminated non normalized otu table
+
+# run the ggrare function attached in the file "generating_rarecurve.r"
 p.rare <- ggrare(phyl.obj1, step = 1, color = "Plant", label = "Sample", se = FALSE)
 
 #set up your own color palette
@@ -488,10 +490,10 @@ rank.abund2
 data.rank.abund2 <- ggplot_build(rank.abund2)
 gtable.rank.abund2 <- ggplot_gtable(data.rank.abund2)
 
-ggsave("rank.abund.normalized.eps",
-       rank.abund2, device = "eps",
-       width = 5, height =4.5, 
-       units= "in", dpi = 600)
+#ggsave("rank.abund.normalized.eps",
+      #rank.abund2, device = "eps",
+      #width = 5, height =4.5, 
+      #units= "in", dpi = 600)
 
 #####################################################################################################################################
 ######################################################################################################################################
@@ -539,7 +541,7 @@ ggsave("Fig.1.eps",
 
 # calculate richness
 head(otu.norm)
-otu.norm <- column_to_rownames(otu.norm, var="OTU.ID")
+#otu.norm <- column_to_rownames(otu.norm, var="OTU.ID")
 s <- specnumber(otu.norm, MARGIN = 2) # richness
 rich <- as.data.frame(s)
 bean.map <- map
@@ -906,7 +908,7 @@ boxplot(residuals(pd.model) ~ bean.map$Plant)
 
 # posthoc
 set.seed(13)
-bean.map$plant <- as.factor(bean.map$Plant)
+bean.map$Plant <- as.factor(bean.map$Plant)
 
 pd.posthoc = glht(pd.model,
                linfct = mcp(Plant="Tukey"))
@@ -1124,7 +1126,7 @@ set.seed(13)
 
 pod.pcoa <- ggplot(data = map, aes(x=ax1.scores, y=ax2.scores))+
             theme_bw()+
-            geom_point(data = map, aes(x = ax1.scores, y = ax2.scores, col=factor(plant)),size=5, alpha =0.7)+
+            geom_point(data = map, aes(x = ax1.scores, y = ax2.scores, col=factor(Plant)),size=5, alpha =0.7)+
             #scale_color_manual(labels = c("A1","A2", "A3","B1","B2","B3","B4","B5","B6","C5","C6","C7"),values=c("#440154FF", "#482677FF","#3F4788FF","#238A8DFF","#1F968BFF","#20A386FF","#29AF7FFF","#3CBB75FF","#56C667FF","#B8DE29FF","#DCE318FF","#FDE725FF"))+
             scale_color_viridis(discrete = T) +
             scale_x_continuous(name=paste("PCoA1:\n",round(ax1,3)*100,"% var. explained", sep=""))+
@@ -1907,72 +1909,111 @@ ggsave("Fig.tiff",
 #####################################################################################################################################
 ######################################################################################################################################
 
-#### Pict for Joanna Poster
+#### 1. Occupancy across all seed samples #####
+setwd('/Users/arifinabintarti/Documents/PAPER/Bean_seed_variability_Bintarti_2020/16S')
+wd <- print(getwd())
 
-# 1. class - Bacteria
-bac.cl <- tax_glom(phyl.obj, taxrank = "Class", NArm = F)
-bac.cl.ra <- transform_sample_counts(bac.cl, function(x) x/sum(x))
-bac.cl.ra
+# load normalized otu table
+otu.norm
+head(otu.norm)
+dim(otu.norm)
+otu.norm <- column_to_rownames(otu.norm, var = "OTU.ID")
 
-df.cl <- psmelt(bac.cl.ra) %>%
-  group_by(Sample.id, Plant, Pod, Class) %>%
-  summarize(Mean = mean(Abundance)) %>%
-  arrange(-Mean)
-
-df.cl$Class <- as.character(df.cl$Class)
-df.cl$Class[df.cl$Mean < 0.1] <- "Other"
-
-# barplot of bacterial/archaeal composition across pods at Phylum level
-library(rcartocolor)
-display_carto_all(colorblind_friendly = TRUE)
-my_colors = carto_pal(12, "Safe")
-my_colors
-
-# New facet label names for plant variable
-plant.labs <- c("Plant: A", "Plant: B", "Plant: C")
-names(plant.labs) <- c("A", "B", "C")
-
-# Create the plot
-
-pod.cl <- ggplot(data=df.cl, aes(x=Plant, y=Mean, fill=Class))
-plot.pod.cl <- pod.cl + 
-                     geom_bar(aes(), stat="identity", position="fill") + 
-                     #scale_fill_manual(values=c('#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c','#f58231', '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1', '#000075', '#808080', 'lightslateblue', '#000000', 'tomato','hotpink2'))+
-                     scale_fill_manual(values=c("#44AA99", "#332288", "#117733","#CC6677","#DDCC77", "#88CCEE","#661100","#AA4499" ,"#888888"))+
-                     theme(legend.position="right") + 
-                     guides(fill=guide_legend(nrow=5))+
-                     labs(y= "Mean Relative Abundance", x="Plant")+
-                     #labs(y= "Mean Relative Abundance", x="Plant", title = "(a) Bacteria/archaea")+
-                     theme(plot.title = element_text(size = 20, face="bold"),
-                           #axis.line.y = element_line(size=0.5, colour = "black"),
-                           panel.grid.major = element_blank(),
-                           panel.grid.minor = element_blank(),
-                           axis.text=element_text(size=14),
-                           #axis.line.x = element_blank(),
-                           #axis.text.x = element_blank(),
-                           #axis.ticks.x = element_blank(),
-                           axis.title.x = element_text(size=15,face="bold"),
-                           axis.title.y =  element_markdown(size=15,face="bold"),
-                           legend.text=element_text(size = 10),
-                           legend.title = element_text(size=11, face = "bold"),
-                           panel.grid = element_blank(), 
-                           panel.background = element_blank(),
-                           #strip.text.x = element_text(size = 12, face = "bold"),
-                           panel.border = element_rect(colour = "black", fill = NA,size = 0.2))+
-                           #facet_grid(~plant, switch = "x", scales = "free_x")+
-                           guides(fill=guide_legend(ncol=1,bycol=TRUE))
-                           
-plot.pod.cl
-
-ggsave("plot.plant.class.eps",
-      plot.pod.cl, device = "eps",
-       width =5, height =5, 
-       units= "in", dpi = 600)
+# load bacterial taxonomy
+head(tax)
+dim(tax)
+tax <- rownames_to_column(tax, var = "OTU.ID")
 
 
+# load metadata
+map <- read.csv("bean.var.map.csv")
+head(map)
 
+##build a long data frame joining rarefied otu table, map root, and tax root
+longDF.seed <- data.frame(OTU.ID=as.factor(rownames(otu.norm)), otu.norm) %>%
+  gather(Sample.id, abun, -OTU.ID) %>%  #keep same column nameing as in mapping file, calling counts as "abun" (abundance)
+  left_join(map) %>%  #will add the info form mapping file (grouped by the 'Sample.id' column)
+  left_join(tax)  %>% #adding the taxonomy info (grouped by the 'OTU.ID' column)
+  group_by(OTU.ID, Sample.id) %>%
+  #BioProject, plant_family, plant_genus, host, compartment
+  summarise(n=sum(abun))
+  #mutate(n=if_else(n>0, 1,0))
 
+##build the new table: OTU.ID as rownames and Sample.id as colnames
+wideDF.seed <- as.data.frame(spread(longDF.seed, OTU.ID, n, fill=0))
+rownames(wideDF.seed) <-  wideDF.seed[,1]
+wideDF.seed <- wideDF.seed[,-1]
+wideDF.seed <- t(wideDF.seed)
 
+##calculate the occupancy of each OTU.ID across Sample.id/Seed
+wideDF.seed.PA <- 1*((wideDF.seed>0)==1)
+Occ.seed <- rowSums(wideDF.seed.PA)/ncol(wideDF.seed.PA)
+df.Occ.seed <- as.data.frame(Occ.seed)
+df.Occ.seed <- rownames_to_column(df.Occ.seed, var = "OTU.ID")
+df.Occ.seed.tax <- merge(df.Occ.seed, tax, by="OTU.ID")
+sort.df.Occ.seed.tax <- df.Occ.seed.tax[order(df.Occ.seed.tax$Occ.seed, decreasing = TRUE),]
+write.csv(sort.df.Occ.seed.tax, file = "sort.df.Occ.seed.tax.csv")
+
+### 2. Occupancy across 3 plants
+
+longDF.plant <- data.frame(OTU.ID=as.factor(rownames(otu.norm)), otu.norm) %>%
+  gather(Sample.id, abun, -OTU.ID) %>%  #keep same column nameing as in mapping file, calling counts as "abun" (abundance)
+  left_join(map) %>%  #will add the info form mapping file (grouped by the 'Sample.id' column)
+  left_join(tax)  %>% #adding the taxonomy info (grouped by the 'OTU.ID' column)
+  group_by(OTU.ID, Plant) %>%
+  summarise(n=sum(abun))
+  #mutate(n=if_else(n>0, 1,0))
+
+##build the new table: OTU.ID as rownames and Plant as colnames
+wideDF.plant <- as.data.frame(spread(longDF.plant, OTU.ID, n, fill=0))
+rownames(wideDF.plant) <-  wideDF.plant[,1]
+wideDF.plant <- wideDF.plant[,-1]
+wideDF.plant <- t(wideDF.plant)
+dim(wideDF.plant) #211 taxa, 3 plant 
+
+##calculate the occupancy of each otu across plants
+wideDF.plant.PA <- 1*((wideDF.plant>0)==1)
+Occ.plant <- rowSums(wideDF.plant.PA)/ncol(wideDF.plant.PA)
+df.Occ.plant <- as.data.frame(Occ.plant)
+df.Occ.plant <- rownames_to_column(df.Occ.plant, var = "OTU.ID")
+df.Occ.plant.tax <- merge(df.Occ.plant, tax, by="OTU.ID")
+sort.df.Occ.plant.tax <- df.Occ.plant.tax[order(df.Occ.plant.tax$Occ.plant, decreasing = TRUE),]
+write.csv(sort.df.Occ.plant.tax, file = "sort.df.Occ.plant.tax.csv")
+
+### 3. Occupancy across seeds within plant
+
+#  1. Plant A
+otu.normA <- data.frame(otu.norm[,c(1:12)])
+##calculate the occupancy of each otu across seeds within plant
+otu.normA.PA <- 1*((otu.normA>0)==1)
+Occ.A <- rowSums(otu.normA.PA)/ncol(otu.normA.PA)
+df.Occ.A <- as.data.frame(Occ.A)
+df.Occ.A <- rownames_to_column(df.Occ.A, var = "OTU.ID")
+df.Occ.A.tax <- merge(df.Occ.A, tax, by="OTU.ID")
+sort.df.Occ.A.tax <- df.Occ.A.tax[order(df.Occ.A.tax$Occ.A, decreasing = TRUE),]
+write.csv(sort.df.Occ.A.tax, file = "sort.df.Occ.A.tax.csv")
+
+#  2. Plant B
+otu.normB <- data.frame(otu.norm[,c(13:36)])
+##calculate the occupancy of each otu across seeds within plant
+otu.normB.PA <- 1*((otu.normB>0)==1)
+Occ.B <- rowSums(otu.normB.PA)/ncol(otu.normB.PA)
+df.Occ.B <- as.data.frame(Occ.B)
+df.Occ.B <- rownames_to_column(df.Occ.B, var = "OTU.ID")
+df.Occ.B.tax <- merge(df.Occ.B, tax, by="OTU.ID")
+sort.df.Occ.B.tax <- df.Occ.B.tax[order(df.Occ.B.tax$Occ.B, decreasing = TRUE),]
+write.csv(sort.df.Occ.B.tax, file = "sort.df.Occ.B.tax.csv")
+
+#  3. Plant C
+otu.normC <- data.frame(otu.norm[,c(37:47)])
+##calculate the occupancy of each otu across seeds within plant
+otu.normC.PA <- 1*((otu.normC>0)==1)
+Occ.C <- rowSums(otu.normC.PA)/ncol(otu.normC.PA)
+df.Occ.C <- as.data.frame(Occ.C)
+df.Occ.C <- rownames_to_column(df.Occ.C, var = "OTU.ID")
+df.Occ.C.tax <- merge(df.Occ.C, tax, by="OTU.ID")
+sort.df.Occ.C.tax <- df.Occ.C.tax[order(df.Occ.C.tax$Occ.C, decreasing = TRUE),]
+write.csv(sort.df.Occ.C.tax, file = "sort.df.Occ.C.tax.csv")
 
 
 
