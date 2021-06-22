@@ -55,7 +55,7 @@ library(tibble)
 library(fitdistrplus)
 
 # SET THE WORKING DIRECTORY
-setwd('/Users/arifinabintarti/Documents/PAPER/Bean_seed_variability_Bintarti_2020/ITS/')
+setwd('/Users/arifinabintarti/Documents/PAPER/Bean_seed_variability_Bintarti_2021/ITS/')
 wd <- print(getwd())
 otu.its <- read.table('otu_table_ITS_UPARSE.txt', sep='\t', header=T, row.names = 1)
 dim(otu.its) ## total otu= 87, otu table still has Mock, NC, and PC in the sample
@@ -499,7 +499,7 @@ boxplot(residuals(model.its) ~ its.map$Plant)
 #1. plot fungal richness among plants
 
 library(viridis)
-
+library(ggtext)
 #Fig.1A
 
 fg.rich.plant <- ggplot(its.map, aes(x=Plant, y=Richness, fill=Plant))+
@@ -975,7 +975,7 @@ ggsave("plant.its.tiff",
 ######################################################################################################################################
 
 #### 1.  Occupancy-mean relative abundance across metadata #####
-setwd('/Users/arifinabintarti/Documents/PAPER/Bean_seed_variability_Bintarti_2020/ITS/')
+setwd('/Users/arifinabintarti/Documents/PAPER/Bean_seed_variability_Bintarti_2021/ITS/')
 wd <- print(getwd())
 
 # load normalized otu table

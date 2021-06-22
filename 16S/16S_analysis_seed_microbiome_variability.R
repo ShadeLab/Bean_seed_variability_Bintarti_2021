@@ -64,7 +64,7 @@ library(lme4)
 library(nlme)
 
 # SET THE WORKING DIRECTORY
-setwd('/Users/arifinabintarti/Documents/PAPER/Bean_seed_variability_Bintarti_2020/16S')
+setwd('/Users/arifinabintarti/Documents/PAPER/Bean_seed_variability_Bintarti_2021/16S')
 wd <- print(getwd())
 otu <- read.table('OTU_table_tax_filt.txt', sep='\t', header=T, row.names = 1)
 otu
@@ -1090,7 +1090,10 @@ ggsave("Fig.2.tiff",
        RichPD, device = "tiff",
        width = 14, height = 12.5, 
        units= "in", dpi = 600)
-
+ggsave("Fig.2.eps",
+       RichPD, device=cairo_ps,
+       width = 14, height = 12.5, 
+       units= "in", dpi = 600)
 #######################################################################################################################################################
 #######################################################################################################################################################
 
@@ -1301,6 +1304,10 @@ ggsave("Fig.3.tiff",
        width = 10, height = 9, 
        units= "in", dpi = 600)
 
+ggsave("Fig.3.eps",
+       PCoA.Beta3, device=cairo_ps,
+       width = 10, height = 9, 
+       units= "in", dpi = 600)
 #######################################################################################################################################################
 #######################################################################################################################################################
 #######################################################################################################################################################
@@ -1910,7 +1917,7 @@ ggsave("Fig.tiff",
 ######################################################################################################################################
 
 #### 1. Occupancy across all seed samples #####
-setwd('/Users/arifinabintarti/Documents/PAPER/Bean_seed_variability_Bintarti_2020/16S')
+setwd('/Users/arifinabintarti/Documents/PAPER/Bean_seed_variability_Bintarti_2021/16S')
 wd <- print(getwd())
 
 # load normalized otu table
