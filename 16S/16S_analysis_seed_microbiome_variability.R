@@ -666,36 +666,36 @@ sum_rich_plant_new
 # 1. Power analysis for richness using lmer
 
 #install.packages("simr")
-library(simr)
-set.seed(13)
-fixef(model.lmer)["plantC"]
-power <- powerSim(model.lmer, nsim=1000, test=fixed("plant"), seed=13) #92.20% (90.36, 93.79)
-print(power, alpha = power$alpha, level = 0.95)
+#library(simr)
+#set.seed(13)
+#fixef(model.lmer)["plantC"]
+#power <- powerSim(model.lmer, nsim=1000, test=fixed("plant"), seed=13) #92.20% (90.36, 93.79)
+#print(power, alpha = power$alpha, level = 0.95)
 #The 3 level categorical predictor (plant) is split into 2 dummy variables when entering the model. 
 #If you are interested in the effect of one specific dummy variable, you can run a z-test on it
-powerB <- powerSim(model.lmer,fixed("plantB",'z'), nsim=200, seed=13)
-print(powerB, alpha = power$alpha, level = 0.95)
-powerC <- powerSim(model.lmer,fixed("plantC",'z'), nsim=200, seed=13) 
-print(powerC, alpha = power$alpha, level = 0.95)
+#powerB <- powerSim(model.lmer,fixed("plantB",'z'), nsim=200, seed=13)
+#print(powerB, alpha = power$alpha, level = 0.95)
+#powerC <- powerSim(model.lmer,fixed("plantC",'z'), nsim=200, seed=13) 
+#print(powerC, alpha = power$alpha, level = 0.95)
 #The power to reject the null hypothesis of zero trend in Richness is about > 80%, 
 #traditionally 80% power is considered adequate (although this arbitrary threshold is not always appropriate
 
 # do test for random variable
-doTest(model.lmer, random())
-powerSim(model.lmer,random(), nsim=100, seed=13)
+#doTest(model.lmer, random())
+#powerSim(model.lmer,random(), nsim=100, seed=13)
 # To find out about the dummy variables, you can take a look at the model summary:
-summary(model.lmer)$coef
+#summary(model.lmer)$coef
 
 # power curve
-pc1 <- powerCurve(model.lmer, nsim=1000, seed=13)
-summary(pc1)
-print(pc1)
-plot(pc1)
+#pc1 <- powerCurve(model.lmer, nsim=1000, seed=13)
+#summary(pc1)
+#print(pc1)
+#plot(pc1)
 
-bean.map$obs <- 1:47
-pc <- powerCurve(model.lmer, along="obs")
-plot(pc)
-summary(pc)
+#bean.map$obs <- 1:47
+#pc <- powerCurve(model.lmer, along="obs")
+#plot(pc)
+#summary(pc)
 
 ######################################################################################################################################################
 ######################################################################################################################################################
@@ -706,68 +706,68 @@ summary(pc)
 
 # install the package and load it
 # install.packages("glmmTMB")
-library("glmmTMB")
+#library("glmmTMB")
 
 # since we deal with discrete count data, then try to analyze the data using poisson and negative binomial distribution
-poismod <- glmmTMB(Richness ~ plant + (1|pod), data = bean.map, family="poisson") #try poisson
-nbmod <- glmmTMB(Richness ~ plant  + (1|pod), data = bean.map, family="nbinom2") #try negative binomial 
-nbmod1 <- glmmTMB(Richness ~ plant + (1|pod), data = bean.map, family="nbinom1") #nbinom1 is similar to quasi-poisson
+#poismod <- glmmTMB(Richness ~ plant + (1|pod), data = bean.map, family="poisson") #try poisson
+#nbmod <- glmmTMB(Richness ~ plant  + (1|pod), data = bean.map, family="nbinom2") #try negative binomial 
+#nbmod1 <- glmmTMB(Richness ~ plant + (1|pod), data = bean.map, family="nbinom1") #nbinom1 is similar to quasi-poisson
 
 # compare the model to see which one is the most fit
-library(bbmle)
-AICtab(poismod, nbmod, nbmod1) # nbmod1 is the most fit model (it has the lowest AIC value)
-anova(poismod, nbmod, nbmod1) 
+#library(bbmle)
+#AICtab(poismod, nbmod, nbmod1) # nbmod1 is the most fit model (it has the lowest AIC value)
+#anova(poismod, nbmod, nbmod1) 
 
 # try to add another fixed factor " dryseed_weight_g" into the model
-nbmod2 <- glmmTMB(Richness ~ plant + dryseed_weight_g + (1|pod), data = bean.map, family="nbinom1")
-nbmod3 <- glmmTMB(Richness ~ plant * dryseed_weight_g + (1|pod), data = bean.map, family="nbinom1")
+#nbmod2 <- glmmTMB(Richness ~ plant + dryseed_weight_g + (1|pod), data = bean.map, family="nbinom1")
+#nbmod3 <- glmmTMB(Richness ~ plant * dryseed_weight_g + (1|pod), data = bean.map, family="nbinom1")
 
 # compare the model to see which one is the most fit
-AICtab(nbmod1, nbmod2, nbmod3) # nbmod1 is the most fit model (it has the lowest AIC value)
-anova(nbmod1, nbmod2, nbmod3)
+#AICtab(nbmod1, nbmod2, nbmod3) # nbmod1 is the most fit model (it has the lowest AIC value)
+#anova(nbmod1, nbmod2, nbmod3)
 
 # model inference
-summary(nbmod1) #there are differences of bacterial/archaeal richness among plants, plant B and C have lower richness than plant A
-car::Anova(nbmod1) #get the p-value of the fixed factor
+#summary(nbmod1) #there are differences of bacterial/archaeal richness among plants, plant B and C have lower richness than plant A
+#car::Anova(nbmod1) #get the p-value of the fixed factor
 
 # check the significance of the random factor
-m2 <- glmmTMB(Richness ~ plant, data = bean.map, family="nbinom1")
-anova(nbmod1, m2) # there are no differences of bacterial/archaeal richness among pods within plant
+#m2 <- glmmTMB(Richness ~ plant, data = bean.map, family="nbinom1")
+#anova(nbmod1, m2) # there are no differences of bacterial/archaeal richness among pods within plant
 
-G2 = -2 * logLik(nbmod1) + 2 * logLik(m2)
-pchisq(as.numeric(G2), df=1, lower.tail=F)
+#G2 = -2 * logLik(nbmod1) + 2 * logLik(m2)
+#pchisq(as.numeric(G2), df=1, lower.tail=F)
 
 # check the model 
-library(DHARMa)
-simulationOutput <- simulateResiduals(fittedModel = nbmod1, plot = T)
+#library(DHARMa)
+#simulationOutput <- simulateResiduals(fittedModel = nbmod1, plot = T)
 #plot(simulationOutput, quantreg = T, asFactor = F)
-residuals(simulationOutput)
-plot(simulationOutput)
-plotQQunif(simulationOutput)
-plotResiduals(simulationOutput)
-hist(simulationOutput)
-testResiduals(simulationOutput)
-testDispersion(nbmod1)
+#residuals(simulationOutput)
+#plot(simulationOutput)
+#plotQQunif(simulationOutput)
+#plotResiduals(simulationOutput)
+#hist(simulationOutput)
+#testResiduals(simulationOutput)
+#testDispersion(nbmod1)
 
 # posthoc
-library(emmeans)
-tukey.rich <- emmeans(nbmod1, "plant")
-tukey.rich
-pairs(tukey.rich)
-pwpm(tukey.rich)
-eff_size(tukey.rich, sigma = sigma(nbmod1), edf = Inf)
-plot(tukey.rich, comparisons = TRUE)
+#library(emmeans)
+#tukey.rich <- emmeans(nbmod1, "plant")
+#tukey.rich
+#pairs(tukey.rich)
+#pwpm(tukey.rich)
+#eff_size(tukey.rich, sigma = sigma(nbmod1), edf = Inf)
+#plot(tukey.rich, comparisons = TRUE)
 
 # get the signif letters
-rich.label <- multcomp::cld(tukey.rich,alpha = 0.05, Letters=letters)
-rich.label
+#rich.label <- multcomp::cld(tukey.rich,alpha = 0.05, Letters=letters)
+#rich.label
 
 # calculate the max value of the richness and put them in the same dataframe of the group and the significant letter
-sum_rich_plant <- bean.map %>%
-  group_by(Plant) %>% 
-  summarize(max.rich=max(Richness))
-sum_rich_plant_new=left_join(rich.label,sum_rich_plant, by='Plant')
-sum_rich_plant_new
+#sum_rich_plant <- bean.map %>%
+  #group_by(Plant) %>% 
+  #summarize(max.rich=max(Richness))
+#sum_rich_plant_new=left_join(rich.label,sum_rich_plant, by='Plant')
+#sum_rich_plant_new
 
 
 ##################################################################################################################################
@@ -777,6 +777,7 @@ sum_rich_plant_new
 library(viridis)
 #install.packages("ggtext")
 library(ggtext)
+set.seed(1)
 rich.plant <- ggplot(bean.map, aes(x=Plant, y=Richness, fill=Plant))+
                     scale_fill_viridis(discrete = T)+
                     geom_violin(alpha=0.4, position = position_dodge(width = .75),size=0.5, trim = F) +
@@ -815,15 +816,16 @@ rich.plant <- ggplot(bean.map, aes(x=Plant, y=Richness, fill=Plant))+
                           
 rich.plant
 # save the plot
-ggsave("rich.plant.tiff",
-       rich.plant, device = "tiff",
-       width = 5, height =4.5, 
-       units= "in", dpi = 600)
+#ggsave("rich.plant.tiff",
+       #rich.plant, device = "tiff",
+      # width = 5, height =4.5, 
+       #units= "in", dpi = 600)
 
 #plot richness among pods
 
 #install.packages("viridis")  # Install
 library("viridis")           # Load
+set.seed(1)
 rich.p <- ggplot(bean.map, aes(x=Pod, y=Richness, fill = Pod))+
                     #geom_boxplot() +
                     #scale_fill_manual(labels = c("A1","A2", "A3", "B1", "B2", "B3", "B4", "B5", "B6", "C1", "C2", "C3"),values=c("#ffc6c4","#cc607d","#672044","#fef6b5", "#ffd795", "#ffb77f", "#fd9576", "#f37378", "#e15383", "#A9DC67", "#6EC574", "#39AB7E"))+
@@ -855,10 +857,10 @@ rich.pod <- rich.p +
   theme(strip.text = element_text(colour = 'black', size = 14, face = 'bold'))
 rich.pod
 
-ggsave("rich.pod.tiff",
-       rich.pod, device = "tiff",
-       width = 6, height =4.5, 
-       units= "in", dpi = 600)
+#ggsave("rich.pod.tiff",
+       #rich.pod, device = "tiff",
+       #width = 6, height =4.5, 
+       #units= "in", dpi = 600)
 
 ######################################################################################################################
 ######################################################################################################################
@@ -980,6 +982,7 @@ sum_pd_plant <- bean.map %>%
 sum_pd_plant_new=left_join(pd.label.df,sum_pd_plant, by='Plant')
 sum_pd_plant_new
 #plot phylogenetic diversity among plant
+set.seed(1)
 pd.plant <- ggplot(bean.map, aes(x=Plant, y=PD_whole_tree, fill=Plant))+
                     #geom_boxplot() +
                     #scale_fill_manual(labels = c("A", "B", "C"),values=c("#CC6677", "#DDCC77","#117733"))+
@@ -1017,15 +1020,16 @@ pd.plant <- ggplot(bean.map, aes(x=Plant, y=PD_whole_tree, fill=Plant))+
 
 pd.plant
 # save the plot
-ggsave("pd.plant.tiff",
-       pd.plant, device = "tiff",
-       width = 5, height =4.5, 
-       units= "in", dpi = 600)
+#ggsave("pd.plant.tiff",
+       #pd.plant, device = "tiff",
+       #width = 5, height =4.5, 
+       #units= "in", dpi = 600)
 
 #plot PD among pods
 
 #install.packages("viridis")  # Install
 library("viridis")           # Load
+set.seed(1)
 pd.p <- ggplot(bean.map, aes(x=Pod, y=PD_whole_tree, fill = Pod))+
                     geom_violin(alpha=0.4, position = position_dodge(width = .75),size=0.5, trim = F) +
                     #geom_boxplot() +
@@ -1059,13 +1063,6 @@ pd.pod <- pd.p +
   #theme(strip.text = element_text(colour = 'black', size = 14, face = 'bold'))
 pd.pod
 
-ggsave("pd.pod.tiff",
-       pd.pod, device = "tiff",
-       width = 6, height =4, 
-       units= "in", dpi = 600)
-
-
-
 ### RESULT: There are no significant differences of bacterial and archaeal richness among pods after post hoc Dunn test
 
 
@@ -1080,12 +1077,12 @@ pd.plant
 pd.pod
 fg.rich.plant
 fg.rich.pod1
+
 setwd('/Users/arifinabintarti/Documents/Bean_seed_variability_Bintarti_2020/Figures')
-#RichPD <- ggarrange(rich.plant,rich.pod,pd.plant,pd.pod, legend=NULL, nrow=2,ncol = 2, align = "hv")
-#library(cowplot)
 library(patchwork)
+
 RichPD <- (rich.plant | rich.pod ) / (pd.plant | pd.pod) / (fg.rich.plant | fg.rich.pod1)
-#RichPD <- plot_grid(rich.plant,rich.pod,pd.plant,pd.pod, align = "hv", axis = "btrl")
+
 ggsave("Fig.2.tiff",
        RichPD, device = "tiff",
        width = 14, height = 12.5, 
@@ -1125,8 +1122,9 @@ pcoa_plot <- plot(ax1.scores, ax2.scores, xlab=paste("PCoA1: ",round(ax1,3)*100,
 require("ggrepel")
 library(ggrepel)
 library(viridis)
-set.seed(13)
 
+
+set.seed(13)
 pod.pcoa <- ggplot(data = map, aes(x=ax1.scores, y=ax2.scores))+
             theme_bw()+
             geom_point(data = map, aes(x = ax1.scores, y = ax2.scores, col=factor(Plant)),size=5, alpha =0.7)+
@@ -1151,14 +1149,9 @@ pod.pcoa <- ggplot(data = map, aes(x=ax1.scores, y=ax2.scores))+
 set.seed(13)
 pod.pcoa2 <- pod.pcoa + geom_text_repel(aes(label = Pod),size = 3, max.overlaps = Inf) 
 pod.pcoa2
-ggsave("pcoa.jac2.tiff",
-       pod.pcoa2, device = "tiff",
-       width = 5, height =4, 
-       units= "in", dpi = 600)
-
-set.seed(13)
 
 ######## Calculated the statistical analysis of beta diversity using nested permanova #########
+
 set.seed(13)
 otu_dist
 adonis <- adonis(otu_dist ~ map$Plant/map$Pod, 
@@ -1178,7 +1171,8 @@ nested.npmanova(otu_dist ~ Plant + Pod,
 
 ###############################################################################################################################
 
-## Betadisper 
+## Betadisper grouped by Plant
+
 set.seed(13)
 groups.plant <- factor(c(rep("A",12),rep("B",24), rep("C",11)))
 otu_dist <- vegdist(t(bacnorm_PA), binary = TRUE, method = "jaccard") #Sorensen
@@ -1220,6 +1214,7 @@ names(hsd.letter)[names(hsd.letter) == "Group"] <- "Plant"
 new.dis.sum <- left_join(hsd.letter,dis.summ.plant,by='Plant')  
 new.dis.sum
 #plot betadisper among plant
+set.seed(1)
 dis.plant <- ggplot(bean.map, aes(x=Plant, y=Dispersion, fill=Plant))+
                     geom_violin(alpha=0.4, position = position_dodge(width = .75),size=0.5, trim = F) +
                     #scale_fill_manual(labels = c("A", "B", "C"),values=c("#CC6677", "#DDCC77","#117733"))+
@@ -1256,6 +1251,7 @@ ggsave("dis.plant.tiff",
        width = 5, height =4.5, 
        units= "in", dpi = 600)
 
+## Betadisper grouped by Pod
 
 groups.pod <- factor(c(rep("A1",4),rep("A2",4), rep("A3",4), rep("B1",4), rep("B2",4), rep("B3",4), rep("B4",4),rep("B5",4), rep("B6",4), rep("C5",3), rep("C6",4), rep("C7",4)))
 otu_dist <- vegdist(t(bacnorm_PA), binary = TRUE, method = "jaccard") #Sorensen

@@ -415,9 +415,6 @@ library(scales)
 ######################################################################################################################################
 ######################################################################################################################################
 
-
-
-
 ###### calculate alpha diversity  ##########
 
 # calculate richness
@@ -501,7 +498,7 @@ boxplot(residuals(model.its) ~ its.map$Plant)
 library(viridis)
 library(ggtext)
 #Fig.1A
-
+set.seed(1)
 fg.rich.plant <- ggplot(its.map, aes(x=Plant, y=Richness, fill=Plant))+
                     #geom_boxplot() +
                     geom_violin(alpha=0.4, position = position_dodge(width = .75),size=0.5, trim = F) +
@@ -526,17 +523,10 @@ fg.rich.plant <- ggplot(its.map, aes(x=Plant, y=Richness, fill=Plant))+
                           panel.grid.minor = element_blank())+
                           stat_summary(fun="median",geom="point", size=13, color="red", shape=95)
 fg.rich.plant
-# save the plot
-ggsave("Fig.3A.Fungal richness among plants.tiff",
-       fg.rich.plant, device = "tiff",
-       width = 5, height =4.5, 
-       units= "in", dpi = 600)
-
 
 #2. plot fungal richness among pods
 
-#Fig.1B
-
+set.seed(1)
 fg.rich.pod <- ggplot(its.map, aes(x=Pod, y=Richness, fill = Pod))+
                     #geom_boxplot() +
                     geom_violin(alpha=0.4, position = position_dodge(width = .75),size=0.5, trim = F) +
@@ -567,12 +557,6 @@ fg.rich.pod1 <- fg.rich.pod +
   #theme(strip.background =element_rect(fill="grey"))+
   #theme(strip.text = element_text(colour = 'black', size = 14, face = 'bold'))
 fg.rich.pod1
-
-ggsave("Fig.3B.Fungal richness among pods.tiff",
-       fg.rich.pod1, device = "tiff",
-       width = 6, height =4.5, 
-       units= "in", dpi = 600)
-
 
 ##################################### FUNGAL COMPOSITION ####################################################################
 
@@ -797,7 +781,7 @@ library(viridis)
 set.seed(13)
 
 # Fig.3. Fungal PCoA Plot
-
+set.seed(13)
 pod.pcoa.its <- ggplot(data = its.map.pcoa, aes(x=ax1.scores.its, y=ax2.scores.its))+
             theme_bw()+
             geom_point(data = its.map.pcoa, aes(x = ax1.scores.its, y = ax2.scores.its, col=factor(Plant)),size=5, alpha =0.7)+
@@ -875,6 +859,7 @@ permod.its # there is no significant differences in dispersion between groups
 
 # Fig. 4 Betadispersion Plot
 library(viridis)
+set.seed(1)
 disperplot.its <- ggplot(its.map, aes(x=Plant, y=Dispersion, fill=Plant))+
                     geom_violin(alpha=0.4, position = position_dodge(width = .75),size=0.5, trim = F) +
                     #scale_fill_manual(labels = c("A", "B", "C"),values=c("#CC6677", "#DDCC77","#117733"))+
