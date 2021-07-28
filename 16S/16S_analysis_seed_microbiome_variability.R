@@ -1547,7 +1547,7 @@ ggsave("Fig.4.eps",
 
 #####################################################################################################################################
 #####################################################################################################################################
-# Distribution of Chloroplast and mitochondria per smaple
+# Distribution of Chloroplast and mitochondria per sample
 
 
 #read the unfiltered otu table 

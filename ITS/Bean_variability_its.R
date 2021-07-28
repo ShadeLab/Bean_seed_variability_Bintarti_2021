@@ -785,8 +785,9 @@ set.seed(13)
 pod.pcoa.its <- ggplot(data = its.map.pcoa, aes(x=ax1.scores.its, y=ax2.scores.its))+
             theme_bw()+
             geom_point(data = its.map.pcoa, aes(x = ax1.scores.its, y = ax2.scores.its, col=factor(Plant)),size=5, alpha =0.7)+
+            scale_color_manual(name = "Plant and Pod", labels = c("A (Pod A1:A3)", "B (Pod B1:B6)", "C (Pod C5:C7)"), values=c("#440154FF", "#287D8EFF","#FDE725FF"))+
             #scale_color_manual(labels = c("A1","A2", "A3","B1","B2","B3","B4","B5","B6","C5","C6","C7"),values=c("#440154FF", "#482677FF","#3F4788FF","#238A8DFF","#1F968BFF","#20A386FF","#29AF7FFF","#3CBB75FF","#56C667FF","#B8DE29FF","#DCE318FF","#FDE725FF"))+
-            scale_color_viridis(discrete = T) +
+            #scale_color_viridis(discrete = T, ) +
             scale_x_continuous(name=paste("PCoA1:\n",round(ax1.its,3)*100,"% var. explained", sep=""))+
             scale_y_continuous(name=paste(round(ax2.its,3)*100,"% var. explained", sep=""))+
             #coord_fixed() + 
@@ -798,7 +799,7 @@ pod.pcoa.its <- ggplot(data = its.map.pcoa, aes(x=ax1.scores.its, y=ax2.scores.i
             plot.title = element_text(size = 20, face="bold"),
             axis.text=element_text(size=14), 
             axis.title=element_text(size=15,face="bold"),
-            legend.text=element_text(size=14, face = 'bold'),
+            legend.text=element_text(size=14),
             legend.title = element_text(size = 14, face = 'bold'),
             legend.spacing.x = unit(0.05, 'cm'))
 
@@ -806,10 +807,10 @@ set.seed(13)
 pod.pcoa.its2 <- pod.pcoa.its + geom_text_repel(aes(label = Pod),size = 3, max.overlaps = Inf) 
 pod.pcoa.its2
 
-ggsave("Fig.5.Fungal PCoA plot tiff",
-       pod.pcoa.its2, device = "tiff",
-       width = 5, height =4, 
-       units= "in", dpi = 600)
+#ggsave("Fig.5.Fungal PCoA plot tiff",
+       #pod.pcoa.its2, device = "tiff",
+       #width = 5, height =4, 
+       #units= "in", dpi = 600)
 
 
 

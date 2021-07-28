@@ -12,12 +12,20 @@ ax2.scores.bc=otu_pcoa_bc$points[,2]
 # calculate percent variance explained, then add to plot
 ax1.bc <- otu_pcoa_bc$eig[1]/sum(otu_pcoa_bc$eig)
 ax2.bc <- otu_pcoa_bc$eig[2]/sum(otu_pcoa_bc$eig)
-map.bc <- cbind(bean.map,ax1.scores.bc,ax2.scores.bc)
+
+#loading metadata
+map <- read.csv("bean.var.map.csv")
+head(map)
+map <- column_to_rownames(map, var="Sample.id")
+View(map)
+
+map.pcoa.bc <- cbind(map,ax1.scores.bc,ax2.scores.bc)
+map.pcoa.bc
 # PCoA Plot 
 set.seed(1)
-pod.pcoa.bc <- ggplot(data = map.bc, aes(x=ax1.scores.bc, y=ax2.scores.bc))+
+pod.pcoa.bc <- ggplot(data = map.pcoa.bc, aes(x=ax1.scores.bc, y=ax2.scores.bc))+
             theme_bw()+
-            geom_point(data = map.bc, aes(x = ax1.scores.bc, y = ax2.scores.bc, col=factor(Plant)),size=5, alpha =0.7)+
+            geom_point(data = map.pcoa.bc, aes(x = ax1.scores.bc, y = ax2.scores.bc, col=factor(Plant)),size=5, alpha =0.7)+
             #scale_color_manual(labels = c("A1","A2", "A3","B1","B2","B3","B4","B5","B6","C5","C6","C7"),values=c("#440154FF", "#482677FF","#3F4788FF","#238A8DFF","#1F968BFF","#20A386FF","#29AF7FFF","#3CBB75FF","#56C667FF","#B8DE29FF","#DCE318FF","#FDE725FF"))+
             scale_color_viridis(discrete = T) +
             scale_x_continuous(name=paste("PCoA1:\n",round(ax1.bc,3)*100,"% var. explained", sep=""))+
@@ -42,11 +50,11 @@ pod.pcoa2.bc
 ######## Calculated the statistical analysis of beta diversity using nested permanova #########
 #install.packages("BiodiversityR")
 library(BiodiversityR)
-map.bc$Plant <- as.factor(map.bc$Plant)
-map.bc$Pod <- as.factor(map.bc$Pod)
+map.pcoa.bc$Plant <- as.factor(map.pcoa.bc$Plant)
+map.pcoa.bc$Pod <- as.factor(map.pcoa.bc$Pod)
 set.seed(1)
 nested.npmanova(otu_dist_bc ~ Plant + Pod, 
-                data = map.bc, 
+                data = map.pcoa.bc, 
                 method = "bray", 
                 permutations = 999)
 ###############################################################################################################################
@@ -65,7 +73,10 @@ names(dispersion.bc)[names(dispersion.bc) == "mod.bc$distance"] <- "Dispersion"
 #add dispersion index
 dispersion.bc <- rownames_to_column(dispersion.bc, "Sample.id")
 #join dispersion index to the map 
-bean.map.bc <- merge(bean.map, dispersion.bc, by="Sample.id", all = T)
+map.pcoa.bc.mod  = rownames_to_column(map,var = "Sample.id")
+map.pcoa.bc.mod <- merge(map.pcoa.bc.mod, dispersion.bc, by="Sample.id", all = T)
+map.pcoa.bc.mod
+
 
 set.seed(1)
 #permutation-based test for multivariate homogeneity of group dispersion (variances)
@@ -84,7 +95,7 @@ df.hsd.group.bc
 # get the significant letter
 detach(package:plyr)
 library(dplyr)
-dis.summ.plant.bc <- bean.map.bc %>% group_by(Plant) %>% summarize(max.dis=max(Dispersion))
+dis.summ.plant.bc <- map.pcoa.bc.mod %>% group_by(Plant) %>% summarize(max.dis=max(Dispersion))
 
 hsd.letter.bc = cldList(P.adj ~ Comparison,
          data = df.hsd.group.bc,
@@ -95,7 +106,7 @@ new.dis.sum.bc <- left_join(hsd.letter.bc,dis.summ.plant.bc,by='Plant')
 new.dis.sum.bc
 #plot betadisper among plant
 set.seed(1)
-dis.plant.bc <- ggplot(bean.map.bc, aes(x=Plant, y=Dispersion, fill=Plant))+
+dis.plant.bc <- ggplot(map.pcoa.bc.mod, aes(x=Plant, y=Dispersion, fill=Plant))+
                     geom_violin(alpha=0.4, position = position_dodge(width = .75),size=0.5, trim = F) +
                     #scale_fill_manual(labels = c("A", "B", "C"),values=c("#CC6677", "#DDCC77","#117733"))+
                     scale_fill_viridis(discrete = T)+
@@ -165,8 +176,13 @@ ax2.scores.its.bc=otu_pcoa.its.bc$points[,2]
 # calculate percent variance explained, then add to plot
 ax1.its.bc <- otu_pcoa.its.bc$eig[1]/sum(otu_pcoa.its.bc$eig)
 ax2.its.bc <- otu_pcoa.its.bc$eig[2]/sum(otu_pcoa.its.bc$eig)
-its.map.pcoa.bc <- cbind(its.map,ax1.scores.its.bc,ax2.scores.its.bc)
 
+setwd('/Users/arifinabintarti/Documents/PAPER/Bean_seed_variability_Bintarti_2021/ITS/')
+its.map <- read.csv("bean.var.map.its.csv")
+head(its.map)
+
+its.map.pcoa.bc <- cbind(its.map,ax1.scores.its.bc,ax2.scores.its.bc)
+its.map.pcoa.bc
 # simple plot
 pcoa_plot.its.bc <- plot(ax1.scores.its.bc, ax2.scores.its.bc, xlab=paste("PCoA1: ",round(ax1.its.bc,3)*100,"% var. explained", sep=""), ylab=paste("PCoA2: ",round(ax2.its.bc,3)*100,"% var. explained", sep=""))
 
@@ -182,8 +198,8 @@ set.seed(1)
 pod.pcoa.its.bc <- ggplot(data = its.map.pcoa.bc, aes(x=ax1.scores.its.bc, y=ax2.scores.its.bc))+
             theme_bw()+
             geom_point(data = its.map.pcoa.bc, aes(x = ax1.scores.its.bc, y = ax2.scores.its.bc, col=factor(Plant)),size=5, alpha =0.7)+
-            #scale_color_manual(labels = c("A1","A2", "A3","B1","B2","B3","B4","B5","B6","C5","C6","C7"),values=c("#440154FF", "#482677FF","#3F4788FF","#238A8DFF","#1F968BFF","#20A386FF","#29AF7FFF","#3CBB75FF","#56C667FF","#B8DE29FF","#DCE318FF","#FDE725FF"))+
-            scale_color_viridis(discrete = T) +
+            scale_color_manual(name = "Plant and Pod", labels = c("A (Pod A1:A3)", "B (Pod B1:B6)", "C (Pod C5:C7)"), values=c("#440154FF", "#287D8EFF","#FDE725FF"))+
+            #scale_color_viridis(discrete = T) +
             scale_x_continuous(name=paste("PCoA1:\n",round(ax1.its.bc,3)*100,"% var. explained", sep=""))+
             scale_y_continuous(name=paste(round(ax2.its.bc,3)*100,"% var. explained", sep=""))+
             #coord_fixed() + 
@@ -195,7 +211,7 @@ pod.pcoa.its.bc <- ggplot(data = its.map.pcoa.bc, aes(x=ax1.scores.its.bc, y=ax2
             plot.title = element_text(size = 20, face="bold"),
             axis.text=element_text(size=14), 
             axis.title=element_text(size=15,face="bold"),
-            legend.text=element_text(size=14, face = 'bold'),
+            legend.text=element_text(size=14),
             legend.title = element_text(size = 14, face = 'bold'),
             legend.spacing.x = unit(0.05, 'cm'))
 
@@ -229,8 +245,13 @@ dispersion.its.bc <- as.data.frame(mod.its.bc$distance)
 names(dispersion.its.bc)[names(dispersion.its.bc) == "mod.its.bc$distance"] <- "Dispersion"
 #add dispersion index
 dispersion.its.bc <- rownames_to_column(dispersion.its.bc, "Sample.id")
+dispersion.its.bc
+
 #join dispersion index to the map 
-its.map.bc <- merge(its.map, dispersion.its.bc, by="Sample.id", all = T)
+its.map
+its.map.bc.mod <- merge(its.map, dispersion.its.bc, by="Sample.id", all = T)
+its.map.bc.mod
+
 
 set.seed  (1)
 #permutation-based test for multivariate homogeneity of group dispersion (variances)
@@ -241,7 +262,7 @@ permod.its.bc # there is marginal differences in dispersion between groups
 #plot betadisper among plant
 library(viridis)
 set.seed(1)
-disperplot.its.bc <- ggplot(its.map.bc, aes(x=Plant, y=Dispersion, fill=Plant))+
+disperplot.its.bc <- ggplot(its.map.bc.mod, aes(x=Plant, y=Dispersion, fill=Plant))+
                     geom_violin(alpha=0.4, position = position_dodge(width = .75),size=0.5, trim = F) +
                     #scale_fill_manual(labels = c("A", "B", "C"),values=c("#CC6677", "#DDCC77","#117733"))+
                     scale_fill_viridis(discrete = T)+
