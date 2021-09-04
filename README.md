@@ -1,13 +1,13 @@
 # Github repository for
 ---
-# Endophytic microbiome variation at the level of a single plant seed
+# Endophytic microbiome variation among single plant seeds
 ---
 ## By A. Fina Bintarti, Abby Sulesky-Grieb, Nejc Stopnisek, Ashley Shade
 ---
 *This work is in preparation*
 
 ## To cite this work or code
-Bintarti AF, A Sulesky-Grieb, N Stopnisek, A Shade.  2021.  Endophytic microbiome variation at the level of a single plant seed
+Bintarti AF, A Sulesky-Grieb, N Stopnisek, A Shade.  2021.  Endophytic microbiome variation at the level of a single plant seed. Phytobiomes Journal.
 
 ## Data
 The 16S rRNA and ITS amplicon data are available on NCBI under the BioProject [PRJNA714251](https://www.ncbi.nlm.nih.gov/bioproject/PRJNA714251).
