@@ -4,7 +4,7 @@
 ---
 ## By A. Fina Bintarti, Abby Sulesky-Grieb, Nejc Stopnisek, Ashley Shade
 ---
-*This work is in preparation*
+*This work is accepted for publication*
 
 ## To cite this work or code
 Bintarti AF, A Sulesky-Grieb, N Stopnisek, A Shade.  2021.  Endophytic microbiome variation among single plant seeds. Phytobiomes Journal.
