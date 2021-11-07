@@ -1,5 +1,5 @@
 # Raw Sequences Analysis of ITS gene from Bean variability
-# Date: January 31st 2020
+# Date: February 5th 2021
 # Author: A. Fina Bintarti
 
 ## Analysis of ITS Miseq Data
