@@ -40,7 +40,7 @@ module load FastQC/0.11.7-Java-1.8.0_162
 
 fastqc raw_reads_R1.fastq raw_reads_R2.fastq -o stats && rm -rf raw_reads_R1.fastq raw_reads_R2.fastq
 ```
-# Part I: Clustering
+# Clustering
 
 usearch v10.0.240_i86linux64, 16.3Gb RAM, 4 cores
 (C) Copyright 2013-17 Robert C. Edgar, all rights reserved.
