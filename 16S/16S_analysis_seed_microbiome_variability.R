@@ -174,6 +174,7 @@ decon.otu
 #loading metadata
 map <- read.csv("bean.var.map.csv")
 head(map)
+dim(map)
 map <- column_to_rownames(map, var="Sample.id")
 View(map)
 
@@ -181,6 +182,7 @@ View(map)
 phenotypeData <- AnnotatedDataFrame(map)
 phenotypeData
 
+head(tax)
 OTUdata <- AnnotatedDataFrame(tax)
 OTUdata
 
