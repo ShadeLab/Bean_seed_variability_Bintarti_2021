@@ -124,7 +124,7 @@ Length         MaxEE 0.50         MaxEE 1.00         MaxEE 2.00
 ```
 /mnt/research/rdp/public/thirdParty/usearch11.0.667_i86linux64 -fastq_eestats2 cut_merged.fastq -output cut_merged.pre_filtered.eestats2.txt -length_cutoffs 100,400,10
 
-/mnt/research/rdp/public/thirdParty/usearch11.0.667_i86linux64 -fastq_filter cut_merged.fastq -fastq_minlen 150 -fastq_maxee 1 -fastaout cut_merged_filtered.fa -fastaout_discarded merged.no_filter.fa -fastqout cut_merged_filtered.fastq
+/mnt/research/rdp/public/thirdParty/usearch11.0.667_i86linux64 -fastq_filter cut_merged.fastq -fastq_minlen 150 -fastq_maxee 1 -fastq_maxns 0 -fastaout cut_merged_filtered.fa -fastaout_discarded merged.no_filter.fa -fastqout cut_merged_filtered.fastq
 
 # output
 100.0% Filtering, 96.8% passed
