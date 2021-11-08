@@ -139,12 +139,15 @@ Length         MaxEE 0.50         MaxEE 1.00         MaxEE 2.00
 #output
 8822144 seqs, 599680 uniques, 332168 singletons (55.4%)
 ```
-### 6. Open reference-based OTU picking (using UNITE_v.8.0 at 97% identity treshhold)
+### 6. Remove singleton
 ```
-/mnt/research/rdp/public/thirdParty/usearch11.0.667_i86linux64 -usearch_global derep_filtered_cut_merged.fasta -id 0.97 -db /mnt/research/ShadeLab/UNITE_v.8.0/sh_refs_qiime_ver8_97_02.02.2019.fasta  -strand plus -uc ref_seqs.uc -dbmatched UNITE_reference.fasta -notmatched UNITE_failed_closed.fq
-
+/mnt/research/rdp/public/thirdParty/usearch10.0.240_i86linux64 -sortbysize derep_filtered_cut_merged.fasta -fastqout nosigs_derep_filtered_cut_merged.fastq -minsize 2
 ```
-### 7. Sorting by size and de novo-based OTU picking on sequences that failed to hit reference
+### 7. Open reference-based OTU picking (using UNITE_v.8.0 at 97% identity treshhold)
+```
+/mnt/research/rdp/public/thirdParty/usearch11.0.667_i86linux64 -usearch_global nosigs_derep_filtered_cut_merged.fastq -id 0.97 -db /mnt/research/ShadeLab/UNITE_v.8.0/sh_refs_qiime_ver8_97_02.02.2019.fasta  -strand plus -uc ref_seqs.uc -dbmatched UNITE_reference.fasta -notmatched UNITE_failed_closed.fq
+```
+### 8. Sorting by size and de novo-based OTU picking on sequences that failed to hit reference
 ```
 /mnt/research/rdp/public/thirdParty/usearch11.0.667_i86linux64  -sortbysize UNITE_failed_closed.fq -fastaout sorted_UNITE_failed_closed.fq
 
@@ -153,14 +156,14 @@ Length         MaxEE 0.50         MaxEE 1.00         MaxEE 2.00
 # output
 100.0% 52 OTUs, 62 chimeras
 ```
-### 8. Combine the seqs of de novo and reference-based OTU picking
+### 9. Combine the seqs of de novo and reference-based OTU picking
 ```
 cat UNITE_reference.fasta de_novo_otus.fasta > REP_seq.fna
 
 # numbering the OTUs for CONSTAX input
 /mnt/home/bintarti/python_scripts-master/fasta_number.py REP_seq.fna OTU_ > 01312020_NUMB_REP_seq.fasta
 ```
-### 9. Mapping/Construct OTU table
+### 10. Mapping/Construct OTU table
 ```
 /mnt/research/rdp/public/thirdParty/usearch11.0.667_i86linux64 -usearch_global mergedfastq/merged.fastq -db 01312020_NUMB_REP_seq.fasta -strand plus -id 0.97 -uc OTU_map.uc -otutabout 01312020_OpenRef_OTU_table.txt
 
