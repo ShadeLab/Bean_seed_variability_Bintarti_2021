@@ -166,7 +166,7 @@ sort(rowSums(decon.otu, na.rm = FALSE, dims = 1), decreasing = F)
 #BiocManager::install("metagenomeSeq", dependencies=TRUE)
 library(metagenomeSeq)
 
-#Creating a MRexperiment object
+###### STEP 1. Prepare MRexperiment Object #######
 
 #loading count data (otu)
 decon.otu
@@ -177,35 +177,36 @@ head(map)
 dim(map)
 map <- column_to_rownames(map, var="Sample.id")
 View(map)
-
-#create MRexperiment object 
 phenotypeData <- AnnotatedDataFrame(map)
 phenotypeData
 
+#loading taxonomy
 head(tax)
 OTUdata <- AnnotatedDataFrame(tax)
 OTUdata
 
-#create model
+#Creating a MRexperiment object
 model <- newMRexperiment(decon.otu, phenoData = phenotypeData, featureData = OTUdata)
 model
 
 sort(rowSums(MRcounts(model), na.rm = FALSE, dims = 1), decreasing = T)
 
-#normalising the data
+###### STEP 2. Normalization #######
 
 #normalise the data to account for differences due to uneven sequencing depth
 #metagenomeSeq uses Cumulative Sum Scaling (CSS) normalisation instead of rarefaction
 #cumNormStatFast=Calculates the percentile for which to sum counts up to and scale by.
 
+
+# 1. calculate the proper percentile by which to normalize counts
 p <- cumNormStatFast(model, pFlag = T)
-
+p
+# 2. To calculate the scaling factors we simply run cumNorm
 #cumNorm=Calculates each column’s quantile and calculates the sum up to and including that quantile.
-
 bac.norm <- cumNorm(model, p = p)
 bac.norm
 
-#export count matrix
+# 3. Exporting normalized count matrix
 otu.norm <- MRcounts(bac.norm, norm = TRUE, log = F)
 
 otu.norm <- as.data.frame(otu.norm)
