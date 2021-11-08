@@ -296,7 +296,7 @@ removing 44 zero OTUs = 211 OTUs
 ```
 ## 12) Reads normalization using CSS method from the metagenomeSeq package (Paulson et al. 2013)
 ```
-A normalization method avoids biases due to uneven sequencing depth
+# A normalization method avoids biases due to uneven sequencing depth
 ### output ###
 file = otu_norm.txt 
 # move the file from the local computer to the hpcc (/mnt/research/ShadeLab/WorkingSpace/Bintarti/Bean_variability/16S_Bean_variability/test)
