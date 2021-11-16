@@ -58,7 +58,7 @@ sed -i 's/Zotu/ZOTU/g' ${dir}/results/zotus.fa
 ~/amoA_MiSeq_sequencing/usearch64 -otutab ${dir}/mergedFastq/merged.fq -zotus ${dir}/results/zotus.fa -otutabout ${dir}/results/ZOTU_table.txt -biomout ${dir}/results/ZOTU_jsn.biom 
 ```
 
-###97% OTUs
+### 97% OTUs Clustering
 ```
 ~/amoA_MiSeq_sequencing/usearch64 -cluster_otus ${dir}/results/uniques_nosig.fa -minsize 2 -otus ${dir}/results/otus.fasta -uparseout ${dir}/results/uparse_otus.txt -relabel OTU_ --threads 28
 
