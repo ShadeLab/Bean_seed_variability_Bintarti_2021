@@ -1,0 +1,47 @@
+# remove primers with cutadapt
+
+files=/mnt/research/ShadeLab/Sequence/raw_sequence/Bean_variability/20190828_Amplicon_PE250_renamed
+
+dir=/mnt/research/ShadeLab/WorkingSpace/Stopnisek/SeedITS
+
+mkdir ${dir}/cut_trim
+mkdir ${dir}/mergedFastq
+mkdir ${dir}/results 
+
+cd ${files}
+
+for i in *R1_001.fastq
+do
+cutadapt -g ^GTGAATCATCGAATCTTTGAA -G ^TCCTCCGCTTATTGATATGC --discard-untrimmed -o ${dir}/cut_trim/${i%R1_001.fastq}_cut_R1.fastq -p ${dir}/cut_trim/${i%R1_001.fastq}_cut_R2.fastq ${files}/${i} ${files}/${i%R1_001.fastq}R2_001.fastq >> ${dir}/logFolder/cutadapt_primer_trimming_stats.txt 
+done
+
+
+#Merge pairs
+
+~/amoA_MiSeq_sequencing/usearch64 -fastq_mergepairs ${dir}/cut_trim/*R1.fastq -relabel @ -fastq_maxee 1 -fastq_maxns 0 -fastqout ${dir}/mergedFastq/merged.fq
+
+
+# Denoise and remove singletons
+
+~/amoA_MiSeq_sequencing/usearch64 -fastx_uniques ${dir}/mergedFastq/merged.fq -fastaout ${dir}/results/uniques.fa -sizeout
+
+~/amoA_MiSeq_sequencing/usearch64 -sortbysize ${dir}/results/uniques.fa -fastaout ${dir}/results/uniques_nosig.fa -minsize 2
+
+
+#ZOTU
+~/amoA_MiSeq_sequencing/usearch64 -unoise3 ${dir}/results/uniques_nosig.fa -zotus ${dir}/results/zotus.fa -tabbedout ${dir}/results/unoise_zotus.txt 
+
+#Construct ZOTU table
+sed -i 's/Zotu/ZOTU/g' ${dir}/results/zotus.fa
+
+~/amoA_MiSeq_sequencing/usearch64 -otutab ${dir}/mergedFastq/merged.fq -zotus ${dir}/results/zotus.fa -otutabout ${dir}/results/ZOTU_table.txt -biomout ${dir}/results/ZOTU_jsn.biom 
+
+
+#97% OTUs
+~/amoA_MiSeq_sequencing/usearch64 -cluster_otus ${dir}/results/uniques_nosig.fa -minsize 2 -otus ${dir}/results/otus.fasta -uparseout ${dir}/results/uparse_otus.txt -relabel OTU_ --threads 28
+
+~/amoA_MiSeq_sequencing/usearch64 -usearch_global ${dir}/mergedFastq/merged.fq -db ${dir}/results/otus.fasta -strand plus -id 0.97 -otutabout ${dir}/results/otu_table_ITS_UPARSE.txt
+
+
+# CONSTAX
+sh constax.sh

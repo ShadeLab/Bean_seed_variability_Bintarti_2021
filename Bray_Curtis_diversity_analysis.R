@@ -177,7 +177,7 @@ ax2.scores.its.bc=otu_pcoa.its.bc$points[,2]
 ax1.its.bc <- otu_pcoa.its.bc$eig[1]/sum(otu_pcoa.its.bc$eig)
 ax2.its.bc <- otu_pcoa.its.bc$eig[2]/sum(otu_pcoa.its.bc$eig)
 
-setwd('/Users/arifinabintarti/Documents/PAPER/Bean_seed_variability_Bintarti_2021/ITS/')
+setwd('/Users/arifinabintarti/Documents/GitHub/Bean_seed_variability_Bintarti_2021/ITS/')
 its.map <- read.csv("bean.var.map.its.csv")
 head(its.map)
 

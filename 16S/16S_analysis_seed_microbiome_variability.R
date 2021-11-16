@@ -64,7 +64,7 @@ library(lme4)
 library(nlme)
 
 # SET THE WORKING DIRECTORY
-setwd('/Users/arifinabintarti/Documents/PAPER/Bean_seed_variability_Bintarti_2021/16S')
+setwd('/Users/arifinabintarti/Documents/GitHub/Bean_seed_variability_Bintarti_2021/16S')
 wd <- print(getwd())
 otu <- read.table('OTU_table_tax_filt.txt', sep='\t', header=T, row.names = 1)
 otu
@@ -1916,7 +1916,7 @@ ggsave("Fig.tiff",
 ######################################################################################################################################
 
 #### 1. Occupancy across all seed samples #####
-setwd('/Users/arifinabintarti/Documents/PAPER/Bean_seed_variability_Bintarti_2021/16S')
+setwd('/Users/arifinabintarti/Documents/GitHub/Bean_seed_variability_Bintarti_2021/16S')
 wd <- print(getwd())
 
 # load normalized otu table

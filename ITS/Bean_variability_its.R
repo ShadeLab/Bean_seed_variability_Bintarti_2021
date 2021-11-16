@@ -55,7 +55,7 @@ library(tibble)
 library(fitdistrplus)
 
 # SET THE WORKING DIRECTORY
-setwd('/Users/arifinabintarti/Documents/PAPER/Bean_seed_variability_Bintarti_2021/ITS/')
+setwd('/Users/arifinabintarti/Documents/GitHub/Bean_seed_variability_Bintarti_2021/ITS/')
 wd <- print(getwd())
 otu.its <- read.table('otu_table_ITS_UPARSE.txt', sep='\t', header=T, row.names = 1)
 dim(otu.its) ## total otu= 87, otu table still has Mock, NC, and PC in the sample
@@ -739,7 +739,6 @@ mean.its.relabund.genus= df.fg.genus %>%
   summarise(ra=mean(Abundance)) %>%
   arrange(-ra)
 
-sum(mean.relabund.genus$ra)
 
 df.fg.cl <- data.table(psmelt(fg.cl.ra))
 mean.its.relabund.cl= df.fg.cl %>%
@@ -961,7 +960,7 @@ ggsave("plant.its.tiff",
 ######################################################################################################################################
 
 #### 1.  Occupancy-mean relative abundance across metadata #####
-setwd('/Users/arifinabintarti/Documents/PAPER/Bean_seed_variability_Bintarti_2021/ITS/')
+setwd('/Users/arifinabintarti/Documents/GitHub/Bean_seed_variability_Bintarti_2021/ITS/')
 wd <- print(getwd())
 
 # load normalized otu table
@@ -986,7 +985,7 @@ df.Occ.seed.its <- as.data.frame(Occ.seed.its)
 df.Occ.seed.its <- rownames_to_column(df.Occ.seed.its, var = "OTUid")
 df.Occ.seed.its.tax <- merge(df.Occ.seed.its, tax.fil.edited, by="OTUid")
 sort.df.Occ.seed.its.tax <- df.Occ.seed.its.tax[order(df.Occ.seed.its.tax$Occ.seed.its, decreasing = TRUE),]
-write.csv(sort.df.Occ.seed.its.tax, file = "sort.df.Occ.seed.its.tax.csv")
+#write.csv(sort.df.Occ.seed.its.tax, file = "sort.df.Occ.seed.its.tax.csv")
 
 ### 2. Occupancy across plants
 
