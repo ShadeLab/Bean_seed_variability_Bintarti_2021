@@ -1,6 +1,6 @@
 # Raw Sequences Analysis of ITS gene from Bean variability
 # Date: 
-# Workflow author: This workflow was made  by Nejc Stopnisek and run as a job on hpcc on his WorkingSpace on hpcc
+# Workflow author: This workflow was made  by Nejc Stopnisek and run as a job on hpcc on his WorkingSpace
 
 ## Analysis of ITS Miseq Data
 Here we used the USEARCH pipeline (v10.0.240_i86linux64) for pre-processing raw sequences data and UPARSE method for OTU clustering (Edgar 2013). Additional analyses were conducted using QIIME
