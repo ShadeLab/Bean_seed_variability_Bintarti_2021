@@ -3,7 +3,7 @@
 # Workflow author: This workflow was made  by Nejc Stopnisek and run as a job on hpcc on his WorkingSpace
 
 ## Analysis of ITS Miseq Data
-Here we used the USEARCH pipeline (v10.0.240_i86linux64) for pre-processing raw sequences data and UPARSE method for OTU clustering (Edgar 2013). Additional analyses were conducted using QIIME
+Here we used the USEARCH pipeline (v10.0.240_i86linux64) for pre-processing raw sequences data and UPARSE method for OTU clustering (Edgar 2013). 
 
 raw sequence data stored on HPCC
 /mnt/research/ShadeLab/Sequence/raw_sequence/Bean_variability/20190828_Amplicon_PE250/
