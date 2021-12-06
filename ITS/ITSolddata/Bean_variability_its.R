@@ -99,6 +99,12 @@ sort(rowSums(otu.fg1, na.rm = FALSE, dims = 1), decreasing = F)
 head(otu.fg1)
 dim(otu.fg1) #59 plant filtered otus; otu table before normalization using metagenomeSeq package and before decontamination
 
+# EDITS. After blasting the OTU reads we noticed that few OTUs (n=14) were missclassified as fungi using CONSTAX version 1. The blast 
+# results indentified these reads as fungi (n=13) and uncalssified (n=1).
+# Removing additional 14 OTUs:
+blastOTUs=read.delim('blast.txt')
+
+
 #otu table of the negative control
 #otu.its <- column_to_rownames(otu.its, var = "OTUid")
 otu.its.NC <- otu.its[,"NC",drop=FALSE]#only negative control
