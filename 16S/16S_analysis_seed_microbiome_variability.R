@@ -503,7 +503,8 @@ gtable.rank.abund2 <- ggplot_gtable(data.rank.abund2)
 
 ##### Fig. 1 Make Rarefaction and Rank-Abundance Plots of Bacteria and Fungi in the Same Panel######
 
-setwd('/Users/arifinabintarti/Documents/Bean_seed_variability_Bintarti_2020/Figures')
+setwd('/Users/arifinabintarti/Documents/Bean_seed_variability_Bintarti_2020/Figures/NewFigures')
+#install.packages("patchwork")
 library(patchwork)
 
 #rarecurve
@@ -534,14 +535,15 @@ Rare.Rank
 ggsave("Fig.1.eps",
        Rare.Rank, device = "eps",
        width = 9, height = 8, 
-       units= "in", dpi = 600)
+       units= "in", dpi  = 600)
 
 #####################################################################################################################################
 ######################################################################################################################################
 
 ### calculate alpha diversity ###
 
-
+setwd('/Users/arifinabintarti/Documents/GitHub/Bean_seed_variability_Bintarti_2021/16S')
+wd <- print(getwd())
 # calculate richness
 head(otu.norm)
 #otu.norm <- column_to_rownames(otu.norm, var="OTU.ID")
@@ -956,7 +958,8 @@ pd.mcs
 ### RESULT: There are significant differences of bacterial and archaeal phylogenetic diversity among plants but not among pods
 
 # posthoc
-
+#install.packages("multcomp")
+library(multcomp)
 set.seed(13)
 bean.map$Plant <- as.factor(bean.map$Plant)
 pd.posthoc = glht(pd.model,
@@ -1081,7 +1084,7 @@ pd.pod
 fg.rich.plant
 fg.rich.pod1
 
-setwd('/Users/arifinabintarti/Documents/Bean_seed_variability_Bintarti_2020/Figures')
+setwd('/Users/arifinabintarti/Documents/Bean_seed_variability_Bintarti_2020/Figures/NewFigures')
 library(patchwork)
 
 RichPD <- (rich.plant | rich.pod ) / (pd.plant | pd.pod) / (fg.rich.plant | fg.rich.pod1)
@@ -1093,7 +1096,7 @@ ggsave("Fig.2.tiff",
 ggsave("Fig.2.eps",
        RichPD, device=cairo_ps,
        width = 14, height = 12.5, 
-       units= "in", dpi = 600)
+       units= "in", fallback_resolution  = 600)
 #######################################################################################################################################################
 #######################################################################################################################################################
 
@@ -1167,7 +1170,7 @@ library(BiodiversityR)
 set.seed(13)
 map$Plant <- as.factor(map$Plant)
 map$Pod <- as.factor(map$Pod)
-nested.npmanova(otu_dist ~ Plant + Pod, 
+nested.npmanova(unname(otu_dist) ~ Plant + Pod, 
                 data = map, 
                 method = "jac", 
                 permutations = 999)
@@ -1217,7 +1220,7 @@ names(hsd.letter)[names(hsd.letter) == "Group"] <- "Plant"
 new.dis.sum <- left_join(hsd.letter,dis.summ.plant,by='Plant')  
 new.dis.sum
 #plot betadisper among plant
-set.seed(1)
+set.seed(42)
 dis.plant <- ggplot(bean.map, aes(x=Plant, y=Dispersion, fill=Plant))+
                     geom_violin(alpha=0.4, position = position_dodge(width = .75),size=0.5, trim = F) +
                     #scale_fill_manual(labels = c("A", "B", "C"),values=c("#CC6677", "#DDCC77","#117733"))+
@@ -1287,7 +1290,7 @@ pod.pcoa.its2
 dis.plant
 disperplot.its
 
-setwd('/Users/arifinabintarti/Documents/Bean_seed_variability_Bintarti_2020/Figures')
+setwd('/Users/arifinabintarti/Documents/Bean_seed_variability_Bintarti_2020/Figures/NewFigures')
 
 library(patchwork)
 
@@ -1306,7 +1309,7 @@ ggsave("Fig.3.tiff",
 ggsave("Fig.3.eps",
        PCoA.Beta3, device=cairo_ps,
        width = 10, height = 9, 
-       units= "in", dpi = 600)
+       units= "in", fallback_resolution  = 600)
 #######################################################################################################################################################
 #######################################################################################################################################################
 #######################################################################################################################################################
@@ -1460,27 +1463,27 @@ plot.pod.cl <- pod.cl +
                            #axis.line.y = element_line(size=0.5, colour = "black"),
                            panel.grid.major = element_blank(),
                            panel.grid.minor = element_blank(),
-                           axis.text=element_text(size=14),
+                           axis.text=element_text(size=12),
                            axis.line.x = element_blank(),
                            axis.text.x = element_blank(),
                            axis.ticks.x = element_blank(),
                            axis.title.x = element_blank(),
-                           axis.title.y =  element_markdown(size=15,face="bold"),
-                           legend.text=element_text(size = 10),
-                           legend.title = element_text(size=11, face = "bold"),
+                           axis.title.y =  element_markdown(size=13,face="bold"),
+                           legend.text=element_text(size = 8),
+                           legend.title = element_text(size=10, face = "bold"),
                            panel.grid = element_blank(), 
                            panel.background = element_blank(),
                            #strip.text.x = element_text(size = 12, face = "bold"),
                            panel.border = element_rect(colour = "black", fill = NA,size = 0.2))+
                            #facet_grid(~plant, switch = "x", scales = "free_x")+
-                           guides(fill=guide_legend(ncol=1,bycol=TRUE))
+                           guides(fill=guide_legend(ncol=1,bycol=T))
                            
 plot.pod.cl
 
 plot.pod.cl1<- plot.pod.cl +
   facet_grid(. ~ Plant, labeller = labeller(Plant=plant.labs), scales="free_x")+
   theme(strip.background =element_rect(fill="grey"))+
-  theme(strip.text = element_text(colour = 'black', size = 14, face = 'bold'))
+  theme(strip.text = element_text(colour = 'black', size = 12, face = 'bold'))
 plot.pod.cl1
 
 ggsave("plot.pod.class.eps",
@@ -1522,16 +1525,16 @@ mean.relabund.cl= df.bac.cl %>%
 plot.pod.cl1
 plot.fg.pod.cl1
 
-setwd('/Users/arifinabintarti/Documents/Bean_seed_variability_Bintarti_2020/Figures')
+setwd('/Users/arifinabintarti/Documents/Bean_seed_variability_Bintarti_2020/Figures/NewFigures')
 
 library(patchwork)
 
-Fig.4 <- plot.pod.cl1 / plot.fg.pod.cl1
+Fig.4 <- plot.pod.cl1 + plot.fg.pod.cl1 + plot_layout(ncol=1) & theme(legend.justification = "left")
 Fig.4
 
 ggsave("Fig.4.eps",
        Fig.4, device = "eps",
-       width = 8.8, height = 7.5, 
+       width = 9, height = 8, 
        units= "in", dpi = 600)
 
 #######################################################################################################################################################

@@ -1,0 +1,15 @@
+OTUid,Taxonomy,Accession_number,E-value,Percent_identity,Query_coverage_percentage
+OTU_4,Phaseolus vulgaris 5.8S ribosomal RNA gene,KF943719,3.00E-150,97.2,100
+OTU_5,Phaseolus vulgaris 5.8S ribosomal RNA gene,MK656101,1.81E-147,96.08,100
+OTU_6,Phaseolus vulgaris 5.8S ribosomal RNA gene,GQ411800,1.00E-129,92.69,100
+OTU_8,Phaseolus coccineus 5.8S ribosomal RNA gene,JN617197,1.00E-144,95.73,100
+OTU_25,Phaseolus vulgaris 5.8S ribosomal RNA gene,ÊMT230615,1.00E-107,96.33,100
+OTU_49,Phaseolus vulgaris clone BAC B4-410,FJ817291,7.00E-116,96.54,100
+OTU_50,Unassigned,NA,NA,NA,NA
+OTU_58,Phaseolus vulgaris 5.8S ribosomal RNA gene,GQ411840,2.00E-116,100,100
+OTU_66,Phaseolus vulgaris 5.8S ribosomal RNA gene,GQ411805,3.00E-109,99.55,100
+OTU_67,Phaseolus vulgaris 5.8S ribosomal RNA gene,MT230615,2.00E-156,99.36,97
+OTU_69,Phaseolus vulgaris 5.8S ribosomal RNA gene,GQ411792,6.00E-157,98.15,100
+OTU_79,Phaseolus vulgaris 5.8S ribosomal RNA gene,GQ411800,3.00E-150,96.93,100
+OTU_81,Phaseolus vulgaris clone PV_GBb020-E06,AC254328,1.00E-21,98.44,100
+OTU_87,Phaseolus vulgaris 5.8S ribosomal RNA gene,KF943719,3.00E-28,98.7,97

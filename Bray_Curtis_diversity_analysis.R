@@ -2,6 +2,7 @@
 ##### CALCULATE BETA DIVERSITY (PCoA PLOT) FOR BACTERIA USING BRAY CURTIS METHOD #####
 ######################################################################################
 
+setwd('/Users/arifinabintarti/Documents/GitHub/Bean_seed_variability_Bintarti_2021/16S')
 # dissimilarity indices for community ecologist to make a distance structure (Bray-Curtis dissimilarity between samples)
 otu_dist_bc <- vegdist(t(otu.norm), binary = F, method = "bray")
 # CMD/classical multidimensional scaling (MDS) of a data matrix. Also known as principal coordinates analysis
@@ -53,7 +54,7 @@ library(BiodiversityR)
 map.pcoa.bc$Plant <- as.factor(map.pcoa.bc$Plant)
 map.pcoa.bc$Pod <- as.factor(map.pcoa.bc$Pod)
 set.seed(1)
-nested.npmanova(otu_dist_bc ~ Plant + Pod, 
+nested.npmanova(unname(otu_dist_bc) ~ Plant + Pod, 
                 data = map.pcoa.bc, 
                 method = "bray", 
                 permutations = 999)
@@ -227,7 +228,7 @@ its.map.pcoa.bc$Plant <- as.factor(its.map.pcoa.bc$Plant)
 its.map.pcoa.bc$Pod <- as.factor(its.map.pcoa.bc$Pod)
 
 set.seed(1)
-nested.npmanova(otu_dist.its_bc ~ Plant + Pod, 
+nested.npmanova(unname(otu_dist.its_bc) ~ Plant + Pod, 
                 data = its.map.pcoa.bc, 
                 method = "bray", 
                 permutations = 999)
@@ -237,7 +238,7 @@ nested.npmanova(otu_dist.its_bc ~ Plant + Pod,
 ## Betadisper grouped by  plant
 
 set.seed  (13)
-groups.plant.its <- factor(c(rep("A",11),rep("B",23), rep("C",11)))
+groups.plant.its <- factor(c(rep("A",10),rep("B",19), rep("C",11)))
 mod.its.bc <- betadisper(otu_dist.its_bc, groups.plant.its)
 mod.its.bc
 mod.its.bc$distances
@@ -257,20 +258,45 @@ set.seed  (1)
 #permutation-based test for multivariate homogeneity of group dispersion (variances)
 permod.its.bc <- permutest(mod.its.bc, permutations = 999, pairwise = T)
 permod.its.bc # there is marginal differences in dispersion between groups
-# the variances among groups are homogenous,
+# the variances among groups are not homogenous,
+
+set.seed  (1)
+hsd.its.bc=TukeyHSD(mod.its.bc) #which groups differ in relation to their variances
+hsd.its.bc
+plot(hsd.its.bc)
+
+hsd.group.its.bc=hsd.its.bc$group
+df.hsd.group.its.bc=as.data.frame(hsd.group.its.bc)
+df.hsd.group.its.bc=rownames_to_column(df.hsd.group.its.bc, var = "Comparison")
+names(df.hsd.group.its.bc)[names(df.hsd.group.its.bc) == "p adj"] <- "P.adj"
+df.hsd.group.its.bc
+# get the significant letter
+detach(package:plyr)
+library(dplyr)
+dis.summ.plant.its.bc <- its.map.bc.mod %>% group_by(Plant) %>% summarize(max.dis=max(Dispersion))
+
+hsd.letter.its.bc = cldList(P.adj ~ Comparison,
+         data = df.hsd.group.its.bc,
+         threshold = 0.05)
+names(hsd.letter.its.bc)[names(hsd.letter.its.bc) == "Group"] <- "Plant"
+
+new.dis.sum.its.bc <- left_join(hsd.letter.its.bc,dis.summ.plant.its.bc,by='Plant')  
+new.dis.sum.its.bc
 
 #plot betadisper among plant
 library(viridis)
 set.seed(1)
 disperplot.its.bc <- ggplot(its.map.bc.mod, aes(x=Plant, y=Dispersion, fill=Plant))+
                     geom_violin(alpha=0.4, position = position_dodge(width = .75),size=0.5, trim = F) +
-                    #scale_fill_manual(labels = c("A", "B", "C"),values=c("#CC6677", "#DDCC77","#117733"))+
                     scale_fill_viridis(discrete = T)+
                     geom_point(shape = 21,size=2, position = position_jitterdodge(),alpha=1)+
-                    #geom_jitter(position = position_jitter(width = 0.1, height = 0, seed=13), alpha=0.5)+
                     theme_bw()+
                     expand_limits(x = 0, y = 0)+
                     labs(title= "(d)", y="Dispersion")+
+                    geom_signif(comparisons = list(c("B", "C")), 
+                                annotations = "*", textsize = 6,
+                                y_position = 0.85, tip_length = 0,
+                                map_signif_level=TRUE, vjust = 0.5) +
                     theme(legend.position="none",
                           axis.text.x=element_text(size = 14),
                           axis.text.y = element_text(size = 14),
@@ -294,7 +320,7 @@ pod.pcoa.its2.bc
 dis.plant.bc
 disperplot.its.bc
 
-setwd('/Users/arifinabintarti/Documents/Bean_seed_variability_Bintarti_2020/Figures')
+setwd('/Users/arifinabintarti/Documents/Bean_seed_variability_Bintarti_2020/Figures/NewFigures')
 
 library(patchwork)
 PCoA.Beta.bc <- (pod.pcoa2.bc | pod.pcoa.its2.bc ) / (dis.plant.bc | disperplot.its.bc)
@@ -306,7 +332,7 @@ PCoA.Beta3.bc <- gridExtra::grid.arrange(PCoA.Beta2.bc, bottom =textGrob("Plant"
 ggsave("Fig.S2.eps",
        PCoA.Beta3.bc, device=cairo_ps,
        width = 10, height = 9, 
-       units= "in", dpi = 600)
+       units= "in", fallback_resolution = 600)
 
 
 

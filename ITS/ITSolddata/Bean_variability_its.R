@@ -99,11 +99,17 @@ sort(rowSums(otu.fg1, na.rm = FALSE, dims = 1), decreasing = F)
 head(otu.fg1)
 dim(otu.fg1) #59 plant filtered otus; otu table before normalization using metagenomeSeq package and before decontamination
 
-# EDITS. After blasting the OTU reads we noticed that few OTUs (n=14) were missclassified as fungi using CONSTAX version 1. The blast 
-# results indentified these reads as fungi (n=13) and uncalssified (n=1).
+# EDITS. After blasting the OTU reads we noticed that few OTUs (n=14) were misclassified as fungi using CONSTAX version 1. The blast 
+# results indentified these reads as plant (mostly Phaseolus vulgaris) 5.8S ribosomal gene (n=13) and unclassified (n=1).
 # Removing additional 14 OTUs:
 blastOTUs=read.delim('blast.txt')
 
+#filter out plant and unassigned OTUs from the OTU table
+otu.fg1 <- rownames_to_column(otu.fg1, var = "OTUid")
+otu.fg1.fil <- anti_join(otu.fg1, blastOTUs, by = "OTUid")
+dim(otu.fg1.fil)
+otu.fg1.fil <- column_to_rownames(otu.fg1.fil, var = "OTUid")
+sort(rowSums(otu.fg1.fil, na.rm = FALSE, dims = 1), decreasing = F)
 
 #otu table of the negative control
 #otu.its <- column_to_rownames(otu.its, var = "OTUid")
@@ -122,8 +128,9 @@ library(microDecon)
 
 #merge otu.NC to otu bac and put otu.NC as the first column
 otu.its.NC <- rownames_to_column(otu.its.NC, var = "OTUid")
-otu.fg1 <- rownames_to_column(otu.fg1, var = "OTUid")
-otu.fg1.NC <- merge(otu.its.NC, otu.fg1, by="OTUid")
+head(otu.fg1.fil)
+otu.fg1.fil <- rownames_to_column(otu.fg1.fil, var = "OTUid")
+otu.fg1.NC <- merge(otu.its.NC, otu.fg1.fil, by="OTUid")
 otu.fg1.NC
 dim(otu.fg1.NC)
 
@@ -131,34 +138,40 @@ dim(otu.fg1.NC)
 otu.its.decon <- decon(data = otu.fg1.NC, numb.blanks = 1, numb.ind = 45, taxa = F)
 otu.its.decon$OTUs.removed # remove 2 OTUs (OTU_2 and OTU_3)
 otu.its.dec.table <- as.data.frame(otu.its.decon$decon.table)
-dim(otu.its.dec.table) # otu = 57
+dim(otu.its.dec.table) # otu = 43
 
 #remove NC from the otu.dec.table 
 otu.its.dec.table <- otu.its.dec.table[,c(1,3:47)]
 otu.its.dec.table
-dim(otu.its.dec.table)#there are 57 otus and 45 samples
+dim(otu.its.dec.table)#there are 43 otus and 45 samples
 head(otu.its.dec.table)
 #use first column as a rownames
-#otu.its.dec.table <- data.frame(otu.its.dec.table, row.names = 1)
+otu.its.dec.table <- data.frame(otu.its.dec.table, row.names = 1)
 #otu.its.dec.table
-#head(sort(colSums(otu.its.dec.table, na.rm = FALSE, dims = 1), decreasing = T))
-#head(sort(rowSums(otu.its.dec.table, na.rm = FALSE, dims = 1), decreasing = F))
+sort(colSums(otu.its.dec.table, na.rm = FALSE, dims = 1), decreasing = T)
+sort(rowSums(otu.its.dec.table, na.rm = FALSE, dims = 1), decreasing = F)
+# remove samples that have 0 reads #  A21  B21  B31  B44  B54
+otu.its.dec.table1=otu.its.dec.table[,which(colSums(otu.its.dec.table) > 0)]
+dim(otu.its.dec.table1)#there are 43 otus and 40 samples
 
 #merge 'otu.its.dec.table' with 'tax.tab' to have match otu and taxonomy table
-#tax.tab <- rownames_to_column(tax.tab, var = "OTUid")
-otu.tax.fil <- merge(otu.its.dec.table,tax.tab, by = "OTUid")
-dim(otu.tax.fil) #57 otus
+head(tax.tab)
+head(otu.its.dec.table1)
+otu.its.dec.table1 <- rownames_to_column(otu.its.dec.table1, var = "OTUid")
+otu.tax.fil <- merge(otu.its.dec.table1,tax.tab, by = "OTUid")
+dim(otu.tax.fil) #43 otus
 
 #separate the taxonomy from the otu table
 otu.tax.fil <- column_to_rownames(otu.tax.fil, var = "OTUid")
-otu.fil <- data.frame(otu.tax.fil[,c(1:45)])
+otu.fil <- data.frame(otu.tax.fil[,c(1:40)])
 dim(otu.fil)
-tax.fil <- data.frame(otu.tax.fil[,c(46:52)])
+tax.fil <- data.frame(otu.tax.fil[,c(41:47)])
 
 #write to  excel to edit the blank with the last taxonomic level possible 
 #write.csv(tax.fil, file = "tax.fil.csv")
 #make the taxonomic csv file "tax.fil.edited.csv"
-
+sort(colSums(otu.fil, na.rm = FALSE, dims = 1), decreasing = FALSE)
+sort(rowSums(otu.fil, na.rm = FALSE, dims = 1), decreasing = FALSE)
 
 ######################################################################################################################################
 ######################################################################################################################################
@@ -168,29 +181,35 @@ tax.fil <- data.frame(otu.tax.fil[,c(46:52)])
 library(metagenomeSeq)
 
 #Creating a MRexperiment object
-head(otu.its.dec.table) #make sure you have "OTUid" as the first column
-dim(otu.its.dec.table) # 57 OTUs
-#write.table(otu.its.dec.table, file = "otu.its.dec.table.txt", col.names = TRUE, row.names = F, quote = FALSE, sep = "\t")
-
+head(otu.its.dec.table1) #make sure you have "OTUid" as the first column
+dim(otu.its.dec.table1) # 43 OTUs
+#write.table(otu.its.dec.table1, file = "otu.its.dec.table.txt", col.names = TRUE, row.names = F, quote = FALSE, sep = "\t")
 #load count data (otu.dec.its)
 otu.dec.its <- loadMeta("otu.its.dec.table.txt", sep = "\t")
 otu.dec.its$counts
-dim(otu.dec.its$counts) #[1] 57 45
+dim(otu.dec.its$counts) #[1] 43 40
 
 #load taxonomy
 tax.fil.edited = read.csv("tax.fil.edited.csv", sep=',', header=T)
-#write.table(tax.fil.edited, file = "tax.fil.edited.txt", col.names = TRUE, row.names = F, quote = FALSE, sep = "\t")
+#filter out plant and unassigned OTUs from the taxonomy table
+tax.filtered <- anti_join(tax.fil.edited, blastOTUs, by = "OTUid")
+dim(tax.filtered)
+#write.table(tax.filtered, file = "tax.fil.edited.txt", col.names = TRUE, row.names = F, quote = FALSE, sep = "\t")
 #loading taxonomy table
 tax.dec.its <- read.delim("tax.fil.edited.txt", stringsAsFactors = FALSE, sep = "\t")
 tax.dec.its <- tax.dec.its %>%
      remove_rownames() %>%
      column_to_rownames(var = 'OTUid')
-dim(tax.dec.its) #[1] 57 otus  7
+dim(tax.dec.its) #[1] 43 otus  7
+
 #loading metadata
-its.map <- read.csv("bean.var.map.its.csv")
+map.its <- read.csv("bean.var.map.its.csv")
+#drop rows containing samples that have zero reads from the metadata #  A21  B21  B31  B44  B54
+its.map <- map.its %>% slice(-c(4, 15, 19, 26, 30))
 #write.table(its.map, file = "bean.var.map.its.txt",col.names = TRUE, row.names = F, quote = FALSE, sep = "\t")
 meta.its <- loadPhenoData("bean.var.map.its.txt", sep="\t",tran = TRUE)
 meta.its
+
 #create one MRexperiment object 
 phenotypeData <- AnnotatedDataFrame(meta.its)
 phenotypeData
@@ -218,7 +237,7 @@ fgnorm
 head(sort(colSums(fgnorm, na.rm = FALSE, dims = 1), decreasing = FALSE))
 head(sort(rowSums(fgnorm, na.rm = FALSE, dims = 1), decreasing = FALSE))
 #write.table(fgnorm, "normalised_logged_fg_otu.txt", sep = "\t", quote = F)
-dim(fgnorm) #there are 57 otus and 45 samples
+dim(fgnorm) #there are 43 otus and 40 samples
 
 
 
@@ -227,26 +246,33 @@ dim(fgnorm) #there are 57 otus and 45 samples
 
 ### Rarefaction curves ######
 # using GlobalPatterns
-
+#BiocManager::install("phyloseq")
 library(phyloseq)
 library(graphics)
 
 
 # 1. rarefaction curve for decontaminated non-normalized OTU table
 
-
-
 # decontaminated non-normalized OTU table
 otu.fil
 dim(otu.fil)
+head(otu.fil)
+# remove sample that has only 1 count (Sample: A31) so that we can perform rarefaction
+otu.fil.rare <- subset(otu.fil, select = -c(A31))
+dim(otu.fil.rare)
+sort(colSums(otu.fil.rare, na.rm = FALSE, dims = 1), decreasing = FALSE)
+sort(rowSums(otu.fil.rare, na.rm = FALSE, dims = 1), decreasing = FALSE)
+head(otu.fil.rare)
+#otu.fil.rare <- rownames_to_column(otu.fil.rare, var = "OTUid")
 
 # fungal taxonomy
-head(tax.fil.edited)
-dim(tax.fil.edited)
-rownames(tax.fil.edited) <- rownames(otu.fil)
+head(tax.filtered)
+dim(tax.filtered)
+tax.filtered <- column_to_rownames(tax.filtered, var = "OTUid")
+rownames(tax.filtered) <- rownames(otu.fil.rare)
 # make phyloseq otu table and taxonomy
-otu.fil.phyl = otu_table(otu.fil, taxa_are_rows = TRUE)
-tax.fil.phyl = tax_table(as.matrix(tax.fil.edited))
+otu.fil.phyl = otu_table(otu.fil.rare, taxa_are_rows = TRUE)
+tax.fil.phyl = tax_table(as.matrix(tax.filtered))
 
 # make phyloseq map
 rownames(its.map) <- its.map$Sample.id
@@ -309,7 +335,7 @@ p.its <- p.rare.its +
  theme_bw()+
  scale_color_manual(values = Palette)+
  labs(title = "(b) Fungi")+
- expand_limits(x = 0, y = 0)+
+ #expand_limits(x = 0, y = 0)+
  theme( strip.text.x = element_text(size=14, face='bold'),
         axis.text=element_text(size = 14),
         #axis.text.y = element_text(size = 13),
@@ -343,13 +369,12 @@ head(fgnorm)
 #otu.norm <- column_to_rownames(otu.norm, var = "OTUid")
 
 # fungal taxonomy
-head(tax.fil.edited)
-tax.fil.edited <- column_to_rownames(tax.fil.edited, var = "OTUid")
-dim(tax.fil.edited)
-rownames(tax.fil.edited) <- rownames(fgnorm)
+head(tax.filtered)
+dim(tax.filtered)
+rownames(tax.filtered) <- rownames(fgnorm)
 # make phyloseq otu table and taxonomy
 otu.its.phyl = otu_table(fgnorm, taxa_are_rows = TRUE)
-tax.its.phyl = tax_table(as.matrix(tax.fil.edited))
+tax.its.phyl = tax_table(as.matrix(tax.filtered))
 
 # make phyloseq map
 rownames(its.map) <- its.map$Sample.id
@@ -458,7 +483,7 @@ aov.mod.its = anova.lme(model.its,
           adjustSigma = FALSE)
 aov.mod.its
 anova(model.its, type='marginal')
-# Result: plant does not has significant effect to the fungal richness, 0.3713
+# Result: plant does not has significant effect to the fungal richness (df=2, F-val=1.08945, p-val=0.377)
 
 # Test the significance of the random effect in the mixed effects model
 model.fixed.its = gls(Richness ~ Plant, 
@@ -475,15 +500,14 @@ fit.its.x = aov(Richness ~ Plant + Error(Pod), data=its.map)
 summary(fit.its.x)
 
 # Using Mean Sq and Df values to get p-value for H = plant and Error = pod
-pf(q=4.007/3.502,
+pf(q=1.669/1.479,
    df1=2,
    df2=9,
    lower.tail=FALSE)
 # Using Mean Sq and Df values to get p-value for H = plant and Error = Within
-summary(fit)
-pf(q=3.502/2.657,
+pf(q=1.479/1.473,
    df1=9,
-   df2=33,
+   df2=28,
    lower.tail=F)
 
 # model evaluation
@@ -576,13 +600,12 @@ head(fgnorm)
 #otu.norm <- column_to_rownames(otu.norm, var = "OTUid")
 
 # fungal taxonomy
-head(tax.fil.edited)
-tax.fil.edited <- column_to_rownames(tax.fil.edited, var = "OTUid")
-dim(tax.fil.edited)
-rownames(tax.fil.edited) <- rownames(fgnorm)
+head(tax.filtered)
+dim(tax.filtered)
+rownames(tax.filtered) <- rownames(fgnorm)
 # make phyloseq otu table and taxonomy
 otu.its.phyl = otu_table(fgnorm, taxa_are_rows = TRUE)
-tax.its.phyl = tax_table(as.matrix(tax.fil.edited))
+tax.its.phyl = tax_table(as.matrix(tax.filtered))
 
 # make phyloseq map
 rownames(its.map) <- its.map$Sample.id
@@ -691,7 +714,7 @@ fg.pod.cl <- ggplot(data=df.fg.cl, aes(x=Pod, y=Mean, fill=Class))
 plot.fg.pod.cl <- fg.pod.cl + 
                      geom_bar(aes(), stat="identity", position="fill") + 
                      #scale_fill_manual(values=c('#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c','#f58231', '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1', '#000075', '#808080', 'lightslateblue', '#000000', 'tomato','hotpink2'))+
-                     scale_fill_manual(values=c("#44AA99", "#332288", "#117733","#CC6677","#DDCC77", "#88CCEE","#661100","#AA4499" ,"#888888",'tomato','#ffd8b1'))+
+                     scale_fill_manual(values=c("#44AA99", "#332288", "#117733","#CC6677","#DDCC77", "#88CCEE","#661100","#AA4499" ,"#888888",'tomato','#ffd8b1','#4363d8','#e6194b' ,'#808000'))+
                      theme(legend.position="right") + 
                      guides(fill=guide_legend(nrow=5))+
                      labs(y= "Mean Relative Abundance", x="Pod", title = "(b) Fungi")+
@@ -699,14 +722,14 @@ plot.fg.pod.cl <- fg.pod.cl +
                            #axis.line.y = element_line(size=0.5, colour = "black"),
                            panel.grid.major = element_blank(),
                            panel.grid.minor = element_blank(),
-                           axis.text=element_text(size=14),
+                           axis.text=element_text(size=12),
                            axis.line.x = element_blank(),
                            #axis.text.x = element_blank(),
                            #axis.ticks.x = element_blank(),
                            #axis.title.x = element_blank(),
-                           axis.title =element_text(size=15,face="bold"),
-                           legend.text=element_text(size = 10),
-                           legend.title = element_text(size=11, face = "bold"),
+                           axis.title =element_text(size=13,face="bold"),
+                           legend.text=element_text(size = 8),
+                           legend.title = element_text(size=10, face = "bold"),
                            panel.grid = element_blank(), 
                            panel.background = element_blank(),
                            strip.text.x = element_text(size = 12, face = "bold"),
@@ -720,12 +743,6 @@ plot.fg.pod.cl1<- plot.fg.pod.cl +
   facet_grid(. ~ Plant, scales="free_x")+
   theme(strip.text.x = element_blank())
 plot.fg.pod.cl1
-
-
-pd.pod <- pd.p +
-  facet_grid(. ~ Plant, scales="free_x")+
-  theme(strip.text = element_blank())
-
 
 ggsave("Fig.4.Fungal relative abund.eps",
       plot.fg.pod.cl1, device = "eps",
@@ -822,7 +839,7 @@ pod.pcoa.its2
 ######## Calculated the statistical analysis of beta diversity using nested permanova #########
 
 set.seed(13)
-adonis.its <- adonis(otu_dist.its ~ its.map$Plant/its.map$Pod, 
+adonis.its <- adonis(unname(otu_dist.its) ~ its.map$Plant/its.map$Pod, 
                  permutation=999,
                  method="jaccard", 
                  strata = NULL)
@@ -834,7 +851,7 @@ its.map$Plant <- as.factor(its.map$Plant)
 its.map$Pod <- as.factor(its.map$Pod)
 
 set.seed(13)
-nested.npmanova(otu_dist.its ~ Plant + Pod, 
+nested.npmanova(unname(otu_dist.its) ~ Plant + Pod, 
                 data = its.map, 
                 method = "jac", 
                 permutations = 999)
@@ -843,7 +860,7 @@ nested.npmanova(otu_dist.its ~ Plant + Pod,
 
 ## Betadisper
 set.seed  (13)
-groups.plant.its <- factor(c(rep("A",11),rep("B",23), rep("C",11)))
+groups.plant.its <- factor(c(rep("A",10),rep("B",19), rep("C",11)))
 otu_dist.its <- vegdist(t(fgnorm_PA), binary = TRUE, method = "jaccard") #Sorensen
 mod.its <- betadisper(otu_dist.its, groups.plant.its)
 mod.its
@@ -909,15 +926,24 @@ otu.tax.its
 otu.its <- otu.tax.its[,c(1:46)]
 otu.its <- column_to_rownames(otu.its, var = "OTUid")
 sum(otu.its)
+colnames(otu.its)
 otu.its.unfil <- otu.tax.its[,c(1:47)]
 colnames(otu.its.unfil)
 
+#read plantae OTUs that have been detected latest
+blastOTUs=read.delim('blast.txt')
+#add kingdom plantae
+blastOTUs['Kingdom'] = 'Plantae'
+#change kingdom from Fungi to Plantae based on the blastOTUs dataframe in the 'otu.its.unfil' dataframe
+otu.its.unfil.ed <- otu.its.unfil %>% 
+      mutate(Kingdom = ifelse(OTUid %in% blastOTUs$OTUid, blastOTUs$Kingdom, Kingdom))
+
 #edit the taxonomy
-otu.its.unfil.ed <- otu.its.unfil %>%
+otu.its.unfil.ed1 <- otu.its.unfil.ed %>%
     mutate(Taxonomy = case_when(Kingdom == "Plantae" ~ 'Plant',
                                 TRUE ~ 'Fungi'))
 
-long.dat.its <- gather(otu.its.unfil.ed, Sample, Read, A12:C74, factor_key = T)
+long.dat.its <- gather(otu.its.unfil.ed1, Sample, Read, A12:C74, factor_key = T)
 long.dat.its
 
 
@@ -956,7 +982,7 @@ plot.unfil.its <- ggplot(df.unfil.its1, aes(x=Taxonomy, y=percent, fill=Taxonomy
                           stat_summary(fun="median",geom="point", size=7, color="red", shape=95)
 plot.unfil.its
 
-setwd('/Users/arifinabintarti/Documents/Bean_seed_variability_Bintarti_2020/Figures')
+setwd('/Users/arifinabintarti/Documents/Bean_seed_variability_Bintarti_2020/Figures/NewFigures')
 ggsave("plant.its.tiff",
        plot.unfil.its, device = "tiff",
        width = 5, height =5, 
@@ -966,7 +992,7 @@ ggsave("plant.its.tiff",
 ######################################################################################################################################
 
 #### 1.  Occupancy-mean relative abundance across metadata #####
-setwd('/Users/arifinabintarti/Documents/GitHub/Bean_seed_variability_Bintarti_2021/ITS/')
+setwd('/Users/arifinabintarti/Documents/GitHub/Bean_seed_variability_Bintarti_2021/ITS/ITSolddata/')
 wd <- print(getwd())
 
 # load normalized otu table
@@ -976,21 +1002,23 @@ head(fgnorm)
 #otu.norm <- column_to_rownames(otu.norm, var = "OTUid")
 
 # load fungal taxonomy
-head(tax.fil.edited)
-tax.fil.edited <- rownames_to_column(tax.fil.edited, var = "OTUid")
-dim(tax.fil.edited)
+head(tax.filtered)
+tax.filtered <- rownames_to_column(tax.filtered, var = "OTUid")
+dim(tax.filtered)
 
 # load metadata
-its.map <- read.csv("bean.var.map.its.csv")
-head(its.map)
+map.its <- read.csv("bean.var.map.its.csv")
+#drop rows containing samples that have zero reads from the metadata #  A21  B21  B31  B44  B54
+its.map <- map.its %>% slice(-c(4, 15, 19, 26, 30))
 
 ##calculate the occupancy of each OTUid across Sample.id/Seed
 fgnorm.seed.PA <- 1*((fgnorm>0)==1)
 Occ.seed.its <- rowSums(fgnorm.seed.PA)/ncol(fgnorm.seed.PA)
 df.Occ.seed.its <- as.data.frame(Occ.seed.its)
 df.Occ.seed.its <- rownames_to_column(df.Occ.seed.its, var = "OTUid")
-df.Occ.seed.its.tax <- merge(df.Occ.seed.its, tax.fil.edited, by="OTUid")
+df.Occ.seed.its.tax <- merge(df.Occ.seed.its, tax.filtered, by="OTUid")
 sort.df.Occ.seed.its.tax <- df.Occ.seed.its.tax[order(df.Occ.seed.its.tax$Occ.seed.its, decreasing = TRUE),]
+
 #write.csv(sort.df.Occ.seed.its.tax, file = "sort.df.Occ.seed.its.tax.csv")
 
 ### 2. Occupancy across plants
@@ -998,7 +1026,7 @@ sort.df.Occ.seed.its.tax <- df.Occ.seed.its.tax[order(df.Occ.seed.its.tax$Occ.se
 longDF.plant.its <- data.frame(OTUid=as.factor(rownames(fgnorm)), fgnorm) %>%
   gather(Sample.id, abun, -OTUid) %>%  #keep same column nameing as in mapping file, calling counts as "abun" (abundance)
   left_join(its.map) %>%  #will add the info form mapping file (grouped by the 'Sample.id' column)
-  left_join(tax.fil.edited)  %>% #adding the taxonomy info (grouped by the 'OTU.ID' column)
+  left_join(tax.filtered)  %>% #adding the taxonomy info (grouped by the 'OTU.ID' column)
   group_by(OTUid, Plant) %>%
   #BioProject, plant_family, plant_genus, host, compartment
   summarise(n=sum(abun))
@@ -1009,49 +1037,50 @@ wideDF.plant.its <- as.data.frame(spread(longDF.plant.its, OTUid, n, fill=0))
 rownames(wideDF.plant.its) <-  wideDF.plant.its[,1]
 wideDF.plant.its <- wideDF.plant.its[,-1]
 wideDF.plant.its <- t(wideDF.plant.its)
-dim(wideDF.plant.its) #57 taxa, 3 plant 
+dim(wideDF.plant.its) #43taxa, 3 plant 
 
 ##calculate the occupancy of each otu across plants
 wideDF.plant.PA.its <- 1*((wideDF.plant.its>0)==1)
 Occ.plant.its <- rowSums(wideDF.plant.PA.its)/ncol(wideDF.plant.PA.its)
 df.Occ.plant.its <- as.data.frame(Occ.plant.its)
 df.Occ.plant.its <- rownames_to_column(df.Occ.plant.its, var = "OTUid")
-df.Occ.plant.tax.its <- merge(df.Occ.plant.its, tax.fil.edited, by="OTUid")
+df.Occ.plant.tax.its <- merge(df.Occ.plant.its, tax.filtered, by="OTUid")
 sort.df.Occ.plant.tax.its <- df.Occ.plant.tax.its[order(df.Occ.plant.tax.its$Occ.plant.its, decreasing = TRUE),]
-write.csv(sort.df.Occ.plant.tax.its, file = "sort.df.Occ.plant.tax.its.csv")
+
+#write.csv(sort.df.Occ.plant.tax.its, file = "sort.df.Occ.plant.tax.its.csv")
 
 ### 3. Occupancy across seeds within plant
 
 # 1.Plant A
-fgnormA <- data.frame(fgnorm[,c(1:11)])
+fgnormA <- data.frame(fgnorm[,c(1:10)])
 ##calculate the occupancy of each otu across seeds within plant
 fgnormA.PA <- 1*((fgnormA>0)==1)
 fgOcc.A <- rowSums(fgnormA.PA)/ncol(fgnormA.PA)
 df.fgOcc.A <- as.data.frame(fgOcc.A)
 df.fgOcc.A <- rownames_to_column(df.fgOcc.A, var = "OTUid")
-df.fgOcc.A.tax <- merge(df.fgOcc.A, tax.fil.edited, by="OTUid")
+df.fgOcc.A.tax <- merge(df.fgOcc.A, tax.filtered, by="OTUid")
 sort.df.fgOcc.A.tax <- df.fgOcc.A.tax[order(df.fgOcc.A.tax$fgOcc.A, decreasing = TRUE),]
 write.csv(sort.df.fgOcc.A.tax, file = "sort.df.fgOcc.A.tax.csv")
 
 # 2.Plant B
-fgnormB <- data.frame(fgnorm[,c(12:34)])
+fgnormB <- data.frame(fgnorm[,c(11:29)])
 ##calculate the occupancy of each otu across seeds within plant
 fgnormB.PA <- 1*((fgnormB>0)==1)
 fgOcc.B <- rowSums(fgnormB.PA)/ncol(fgnormB.PA)
 df.fgOcc.B <- as.data.frame(fgOcc.B)
 df.fgOcc.B <- rownames_to_column(df.fgOcc.B, var = "OTUid")
-df.fgOcc.B.tax <- merge(df.fgOcc.B, tax.fil.edited, by="OTUid")
+df.fgOcc.B.tax <- merge(df.fgOcc.B, tax.filtered, by="OTUid")
 sort.df.fgOcc.B.tax <- df.fgOcc.B.tax[order(df.fgOcc.B.tax$fgOcc.B, decreasing = TRUE),]
 write.csv(sort.df.fgOcc.B.tax, file = "sort.df.fgOcc.B.tax.csv")
 
 # 3.Plant C
-fgnormC <- data.frame(fgnorm[,c(35:45)])
+fgnormC <- data.frame(fgnorm[,c(30:40)])
 ##calculate the occupancy of each otu across seeds within plant
 fgnormC.PA <- 1*((fgnormC>0)==1)
 fgOcc.C <- rowSums(fgnormC.PA)/ncol(fgnormC.PA)
 df.fgOcc.C <- as.data.frame(fgOcc.C)
 df.fgOcc.C <- rownames_to_column(df.fgOcc.C, var = "OTUid")
-df.fgOcc.C.tax <- merge(df.fgOcc.C, tax.fil.edited, by="OTUid")
+df.fgOcc.C.tax <- merge(df.fgOcc.C, tax.filtered, by="OTUid")
 sort.df.fgOcc.C.tax <- df.fgOcc.C.tax[order(df.fgOcc.C.tax$fgOcc.C, decreasing = TRUE),]
 write.csv(sort.df.fgOcc.C.tax, file = "sort.df.fgOcc.C.tax.csv")
 
