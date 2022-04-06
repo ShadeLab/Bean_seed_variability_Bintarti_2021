@@ -560,6 +560,7 @@ pd.index <- rownames_to_column(pd.index, "Sample.id")
 #join Faith's PD index to the map 
 bean.map <- rownames_to_column(bean.map, var = "Sample.id")
 bean.map <- merge(bean.map, pd.index, by="Sample.id", all = T)
+write.csv(bean.map, file = "bean.map.csv")
 
 ###############################################################################################################################################
 ###############################################################################################################################################

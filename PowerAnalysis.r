@@ -1,5 +1,5 @@
 ################################################################################################################################
-################################  Determining Power for Bean Drought Experiment   #######################################
+################################  Determining Power Analysis for Bean Drought Experiment   #######################################
 
 install.packages("paramtest")
 install.packages("pwr")
@@ -15,7 +15,7 @@ library('nlme')
 library('lavaan')
 library('dplyr')
 
-# We want to determine how many samples needed to allow us to detecan effect of given size with a given degree of confidence
+# We want to determine how many samples needed to allow us to detect an effect of given size with a given degree of confidence
 # there will be control and drought treatments, so we want to see the effect of drought to seed microbiome structure
 # we will use t-test for the analysis
 
@@ -25,7 +25,9 @@ pwr.t.test(n = , d = , sig.level = , power = , type = c("two.sample", "one.sampl
 # n = sample size
 
 #load the  data
-bean.map
+setwd('/Users/arifinabintarti/Documents/GitHub/Bean_seed_variability_Bintarti_2021/16S')
+wd <- print(getwd())
+bean.map <- read.csv("bean.map.csv", row.names = 1)
 data.rich <- bean.map[,c(2,6,7)]
 
 #calculate mean and sd of richness and PD
@@ -36,6 +38,7 @@ data.bac <- bean.map %>%
           sd.pd = sd(PD_whole_tree))
 
 #group by plant
+detach(package:plyr)
 data.bac.plant <- bean.map %>%
  group_by(Plant) %>%
 summarise(mean.rich = mean(Richness),
@@ -47,7 +50,9 @@ summarise(mean.rich = mean(Richness),
 
 data.bac.plant
 
-###  do some simulation for t-test two means / t-test two samples for richness ###
+#############################################################################################################################
+######################  do some simulation for t-test two means / t-test two samples for Richnesss ##########################
+
 
 #plant A
 n1 <- 12
@@ -98,9 +103,6 @@ sqrt(sum(fit.rich$residuals^2) / fit.rich$df)
 g = d * (1-(3/((4*36)-9)))
 g
 
-
-
-
 # simulation
 n <- seq(0, 100, 1)
 n
@@ -136,9 +138,8 @@ pwr.t.test(d=g,power=.95,sig.level=.05,type="two.sample")
 
 
 
-
-###  do some simulation for t-test two means / t-test two samples for PD ###
-
+#############################################################################################################################
+#########  do some simulation for t-test two means / t-test two samples for Phylogenetic Diversity ##########################
 
 
 #plant A
@@ -202,39 +203,43 @@ power.pd.plot
 pwr.t.test(d=g.pd,power=.8,sig.level=.05,type="two.sample")
 pwr.t.test(d=g.pd,power=.95,sig.level=.05,type="two.sample")
 
+#############################################################################################################################
+#############################################################################################################################
 
 #pwrt.pd<-pwr.t.test(d=d.pd,n=c(2,5,10,15,20,25,30,40,50,60,70,80,90,100),sig.level=.05,type="two.sample")
 #pwrt.pd
 #plot(pwrt.pd$n,pwrt.pd$power,type="b",xlab="sample size",ylab="power")
 
-effect_sizes <- c(.25, .5, .8)
-conditions <- expand.grid(n = n, effect_sizes = effect_sizes)
+#effect_sizes <- c(.25, .5, .8)
+#conditions <- expand.grid(n = n, effect_sizes = effect_sizes)
 
-power_curve <- sapply(seq_len(nrow(conditions)), function(i) 
- power.t.test(n = conditions[i, 'n'],
-              delta =  conditions[i, 'effect_sizes'], 
-              type = 'two.sample')$power)
-power_curve
+#power_curve <- sapply(seq_len(nrow(conditions)), function(i) 
+ #power.t.test(n = conditions[i, 'n'],
+              #delta =  conditions[i, 'effect_sizes'], 
+              #type = 'two.sample')$power)
+#power_curve
 
-power_curve_df <- bind_cols( conditions,power = power_curve)
-ggplot(power_curve_df, aes(x = n, y = power)) +
- geom_line(aes(color = factor(effect_sizes)), size = 2) + 
- geom_hline(yintercept = 0.8, linetype = 2, color = 'gray30') + 
- scale_x_continuous("Sample Size", breaks = seq(0, 100, 20)) +
- scale_y_continuous("Power", breaks = seq(0, 1, .2)) + 
- scale_color_grey("Effect Size") +
- theme_bw(base_size = 14)
+#power_curve_df <- bind_cols( conditions,power = power_curve)
+#ggplot(power_curve_df, aes(x = n, y = power)) +
+ #geom_line(aes(color = factor(effect_sizes)), size = 2) + 
+ #geom_hline(yintercept = 0.8, linetype = 2, color = 'gray30') + 
+ #scale_x_continuous("Sample Size", breaks = seq(0, 100, 20)) +
+ #scale_y_continuous("Power", breaks = seq(0, 1, .2)) + 
+ #scale_color_grey("Effect Size") +
+ #theme_bw(base_size = 14)
 
 
 #######################################################################################################################################################
 #######################################################################################################################################################
 
+# another way to calculate the size needed for certain power (0.95) using data Richness
 groupmeans <- data.bac.plant$mean.rich
 p.rich <- power.anova.test(groups = length(groupmeans), 
 between.var = var(groupmeans), within.var = 65.85873 , 
 power=0.95,sig.level=0.05,n=NULL)
 p.rich
 
+# another way to simulate the power and the size using data Richness
 groupmeans <- data.bac.plant$mean.rich
 n.aov <- c(seq(2,10,by=1),seq(12,20,by=2),seq(25,50,by=5))
 p.rich <- power.anova.test(groups = length(groupmeans), 
@@ -245,25 +250,22 @@ p.rich
 p.rich.df <- data.frame(n=n, power=power)
 plot(n.aov,p.rich$power)
 
+#install.packages("DescTools")
+#library(DescTools)
 
+#set.seed(13)
+#nested.rich <- aov(bean.map$Richness~bean.map$Plant/factor(bean.map$Pod))
+#summary(nested.rich)
 
+#EtaSq(nested.rich, type=1, anova=TRUE)
+#EtaSq(fit.rich, type=1, anova=TRUE)
 
-install.packages("DescTools")
-library(DescTools)
+#set.seed(13)
+#pwr.anova.test(k = 2, f =0.719, sig.level =0.05 , power =0.8 )
+#pwr.anova.test(k = 2, f =0.719, sig.level =0.05 , power =0.95 )
 
-set.seed(13)
-nested.rich <- aov(bean.map$Richness~bean.map$Plant/factor(bean.map$Pod))
-
-EtaSq(nested.rich, type=1, anova=TRUE)
-EtaSq(fit.rich, type=1, anova=TRUE)
-
-
-
-set.seed(13)
-pwr.anova.test(k = 2, f =0.719, sig.level =0.05 , power =0.8 )
-
-pwr.anova.test(k = 2, f =0.719, sig.level =0.05 , power =0.95 )
-
+##############################################################################################################################
+############################# Plot the figures for Richness and Phylogenetic Diversity Power analysis ##################################################################
 
 setwd('/Users/arifinabintarti/Documents/Bean_seed_variability_Bintarti_2020/Figures')
 library(patchwork)
