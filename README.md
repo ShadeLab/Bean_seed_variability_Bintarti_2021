@@ -4,10 +4,11 @@
 ---
 ## By A. Fina Bintarti, Abby Sulesky-Grieb, Nejc Stopnisek, Ashley Shade
 ---
-*This work is accepted for publication*
+*This work is published*
 
 ## To cite this work or code
-Bintarti AF, A Sulesky-Grieb, N Stopnisek, A Shade.  2021.  Endophytic microbiome variation among single plant seeds. Phytobiomes Journal.
+Bintarti AF, A Sulesky-Grieb, N Stopnisek, A Shade.  2022.  Endophytic microbiome variation among single plant seeds. Phytobiomes Journal. 6:2471-2906.
+[link](https://apsjournals.apsnet.org/doi/full/10.1094/PBIOMES-04-21-0030-R)
 
 ## Data
 The 16S rRNA and ITS amplicon data are available on NCBI under the BioProject [PRJNA714251](https://www.ncbi.nlm.nih.gov/bioproject/PRJNA714251).
